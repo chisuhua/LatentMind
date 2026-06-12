@@ -118,20 +118,31 @@
 
 ---
 
-## 5. 待补充的研究资料
+## 5. 研究资料收集状态
+
+### 5.1 已收集
+
+| 来源 | 优先级 | 状态 | 笔记 |
+|---|---|---|---|
+| **HRM-Text**（核心） | 🔴 必做 | ✅ 已收集 | [hrm-text.md](./hrm-text.md) |
+| **GRAM**（v1.5 集成） | 🔴 必做 | ✅ 源文件已下载，笔记撰写中 | [gram.md](./gram.md) ⏳ |
+| HRM 原始 27M（符号版本） | 🟡 参考 | ✅ 已收集 | [hrm-original.md](./hrm-original.md) |
+| TRM（小型递归） | 🟢 可选 | ✅ 已收集 | [trm.md](./trm.md) |
+
+### 5.2 待补充
 
 | 来源 | 优先级 | 状态 |
 |---|---|---|
-| **HRM-Text**（核心） | 🔴 必做 | ✅ 见 [hrm-text.md](./hrm-text.md) |
-| **GRAM**（v1.5 集成） | 🔴 必做 | ⏳ 待收集（OpenReview: Vxu6kcIjwV） |
-| HRM 原始 27M（符号版本） | 🟡 参考 | ⏳ 待收集（arXiv:2506.21734） |
-| Ouro 1.4B（对比基线） | 🟢 可选 | ⏳ 待收集 |
-| Huginn 3.5B（对比基线） | 🟢 可选 | ⏳ 待收集 |
-| TRM（小型递归） | 🟢 可选 | ⏳ 待收集 |
-| HRM-MoE（社区扩展） | 🟡 备选方案 | ⏳ 待收集 |
-| MagicNorm 原始论文 | 🟡 深入理解 | ⏳ 待收集 |
-| AdamATan2 优化器 | 🟡 复现细节 | ⏳ 待收集（论文 [20]） |
+| Ouro 1.4B（对比基线） | 🟢 可选 | ⏳ 待收集（arXiv ID 待查）|
+| Huginn 3.5B（对比基线） | 🟢 可选 | ⏳ 待收集（arXiv ID 待查）|
+| HRM-MoE（社区扩展） | 🟡 备选方案 | ⏳ 待收集（GitHub: XiaoYee/HRM-MoE，无 paper）|
+| MagicNorm 原始论文 | 🟡 深入理解 | ⏳ 待收集（HRM 论文内的概念，无独立 paper）|
+| AdamATan2 优化器 | 🟡 复现细节 | ⏳ 待收集（HRM-Text 论文 [20] 引用）|
 | FlashAttention 3 | 🟡 部署相关 | ⏳ 通用知识，不专列 |
+
+### 5.3 源文件位置
+
+所有论文源文件（PDF/HTML）存放在 [`papers/`](./papers/) 子目录。
 
 ---
 
