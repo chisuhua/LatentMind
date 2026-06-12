@@ -10,9 +10,12 @@
 | 文件 | 内容 | 优先级 | 状态 |
 |---|---|---|---|
 | [hrm-text.md](./hrm-text.md) | HRM-Text 论文/模型完整笔记（Sapient 2026-05） | 🔴 核心 | ✅ |
-| [projects.md](./projects.md) | 相关项目元信息（ChipForge / HydraForge / AgenticLlama / minimind / GRAM） | 🔴 核心 | ✅ |
-| `gram.md` | GRAM 论文笔记（v1.5 集成关键） | 🔴 核心 | ⏳ 待补充 |
-| `trm.md` | TRM 论文笔记（小型递归基线） | 🟡 参考 | ⏳ 可选 |
+| [projects.md](./projects.md) | 相关项目元信息（ChipForge / HydraForge / AgenticLlama / minimind） | 🔴 核心 | ✅ |
+| [hrm-original.md](./hrm-original.md) | HRM 原始 27M 论文笔记（MagicNorm 概念溯源） | 🟡 参考 | ✅ |
+| [trm.md](./trm.md) | TRM 论文笔记（"Less is More" 直接挑战 HRM）| 🟡 重要 | ✅ |
+| `gram.md` | GRAM 论文笔记（v1.5 集成关键） | 🔴 核心 | ⏳ 笔记撰写中（源 PDF 已下载）|
+| [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
+| [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
 | `huginn.md` | Huginn 3.5B 笔记（latent recurrent 对比） | 🟢 对比 | ⏳ 可选 |
 | `ouro.md` | Ouro 1.4B 笔记（looped 对比） | 🟢 对比 | ⏳ 可选 |
 
@@ -40,6 +43,10 @@
 references/
 ├── <技术名>.md          # 单技术笔记
 ├── projects.md          # 关系图与项目卡片（唯一）
+├── papers/              # 论文源文件
+│   ├── arxiv-<YYMM>.<NNNN>-<slug>.pdf
+│   ├── arxiv-<YYMM>.<NNNN>-<slug>.html
+│   └── README.md
 └── README.md            # 本文件（索引）
 ```
 
@@ -54,7 +61,7 @@ references/
 
 | 触发 | 动作 |
 |---|---|
-| 新论文/新版本发布 | 更新对应笔记 + 本索引 |
+| 新论文/新版本发布 | 更新对应笔记 + 本索引 + papers/ 子目录 |
 | 权重/许可证变化 | 更新"开源权重"章节 |
 | 集成时发现新风险 | 在对应笔记追加"复现风险"小节 |
 | 项目卡片信息变化 | 更新 `projects.md` |
@@ -78,7 +85,24 @@ references/
 | 多模态复用有什么坑？ | §10 复现风险 |
 | 我该怎么用？ | §11 复用建议 |
 
-### 3.2 我想了解上下游项目 → 去哪查
+### 3.2 我想了解 HRM（原始 27M）的什么 → 去哪查
+
+| 问题 | 查 [hrm-original.md](./hrm-original.md) 哪一节 |
+|---|---|
+| 为什么有"分层循环"概念？ | §3 核心创新 |
+| 27M 模型具体怎么训？ | §4 实验结果 |
+| 跟 HRM-Text 怎么演进？ | §5 与 HRM-Text 关系 |
+
+### 3.3 我想了解 TRM 怎么"挑战" HRM → 去哪查
+
+| 问题 | 查 [trm.md](./trm.md) 哪一节 |
+|---|---|
+| TRM 比 HRM 强在哪？ | §3 核心创新 / §4 关键结果 |
+| 我要不要重写 v1.0 backbone？ | §5 对 LatentMind 的启示 |
+| 跟 GRAM 怎么对比？ | §5.4 与 GRAM 的对比 |
+| 我该做什么决策？ | §7 对项目决策的影响 |
+
+### 3.4 我想了解上下游项目 → 去哪查
 
 | 问题 | 查 [projects.md](./projects.md) 哪一节 |
 |---|---|
@@ -86,7 +110,17 @@ references/
 | 每个项目做什么？路径在哪？ | §2 项目卡片 |
 | 谁依赖谁？ | §3 依赖矩阵 |
 | 哪些资源可跨项目复用？ | §4 共享资源 |
-| 哪些参考材料还没收集？ | §5 待补充清单 |
+| 哪些参考材料还没收集？ | §5 研究资料收集状态 |
+
+### 3.5 我想查看论文原文 PDF/HTML → 去哪查
+
+| 问题 | 查 [papers/README.md](./papers/README.md) 哪一节 |
+|---|---|
+| 哪些论文有源文件？ | §1 文件清单 |
+| 命名规范？ | §2 文件命名规范 |
+| 下载来源？ | §3 下载来源说明 |
+| HRM-Text PDF 为什么没有？ | §3.3 / §5 重试策略 |
+| 怎么读 PDF / HTML？ | §4 使用方式 |
 
 ---
 
@@ -94,23 +128,25 @@ references/
 
 ### 4.1 已收集（外部源）
 
-- ✅ HRM-Text 论文（arXiv:2605.20613）
+- ✅ HRM-Text 论文（arXiv:2605.20613）— abs 摘要页 + 详细笔记
 - ✅ HRM-Text HF 模型卡
 - ✅ HRM-Text GitHub 仓库结构
 - ✅ HRM-Text HF Transformers PR（#46025）
 - ✅ HRM-Text vLLM PR（#43098）
 - ✅ HRM-Text MLX-VLM PR（#1238）
-- ✅ GRAM 项目页与论文链接
-- ✅ HRM 原始论文链接（arXiv:2506.21734）
+- ✅ GRAM 论文（arXiv:2605.19376）— PDF + HTML
+- ✅ GRAM 项目页（https://ahn-ml.github.io/gram-website）
+- ✅ HRM 原始 27M 论文（arXiv:2506.21734）— PDF + HTML
+- ✅ TRM 论文（arXiv:2510.04871）— PDF + HTML
+- ✅ TRM GitHub 仓库（待补充链接）
 
 ### 4.2 待补充（外部源）
 
-- ⏳ GRAM 论文全文（OpenReview: Vxu6kcIjwV）— 需重点关注 BPTT、ELBO、1B 扩展性
-- ⏳ HRM 原始 27M 论文（符号版本） — 用作 MagicNorm 概念溯源
-- ⏳ MagicNorm 的更早引用
-- ⏳ AdamATan2 优化器原文
-- ⏳ TRM 论文（小型递归基线）
-- ⏳ HRM-MoE 仓库（社区扩展方案）
+- ⏳ Ouro 1.4B（arXiv ID 待查）
+- ⏳ Huginn 3.5B（arXiv ID 待查）
+- ⏳ HRM-MoE 仓库（GitHub: XiaoYee/HRM-MoE，无 paper）
+- ⏳ MagicNorm 早期引用（HRM 论文内的概念，无独立 paper）
+- ⏳ AdamATan2 优化器原文（HRM-Text 论文 [20] 引用）
 
 ### 4.3 待补充（内部源）
 
@@ -129,6 +165,7 @@ references/
 2. **外部 URL 链接**（仅记录链接）：需要联网时再次获取
    - 建议用 `webfetch` 工具拉取
    - 用 `librarian` 子 agent 做系统研究（参见 [AGENTS.md](../../AGENTS.md)）
+3. **papers/ 源文件**（PDF/HTML）：可离线查阅
 
 ---
 
