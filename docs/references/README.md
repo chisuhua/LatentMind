@@ -10,14 +10,18 @@
 | 文件 | 内容 | 优先级 | 状态 |
 |---|---|---|---|
 | [hrm-text.md](./hrm-text.md) | HRM-Text 论文/模型完整笔记（Sapient 2026-05） | 🔴 核心 | ✅ |
+| [gram.md](./gram.md) | GRAM 论文笔记（v1.5 集成关键） | 🔴 核心 | ✅ v2 增强版 |
 | [projects.md](./projects.md) | 相关项目元信息（ChipForge / HydraForge / AgenticLlama / minimind） | 🔴 核心 | ✅ |
 | [hrm-original.md](./hrm-original.md) | HRM 原始 27M 论文笔记（MagicNorm 概念溯源） | 🟡 参考 | ✅ |
 | [trm.md](./trm.md) | TRM 论文笔记（"Less is More" 直接挑战 HRM）| 🟡 重要 | ✅ |
-| `gram.md` | GRAM 论文笔记（v1.5 集成关键） | 🔴 核心 | ⏳ 笔记撰写中（源 PDF 已下载）|
+| [rrm-survey.md](./rrm-survey.md) | RRM-B 谱系调查（TRM / Looped TF / Hyperloop / SE-RRM / Huginn / Ouro + 下一代架构）| 🟡 重要 | ✅ |
+| [rrm-reward.md](./rrm-reward.md) | RRM-A 笔记（清华 2505.14674，奖励推理模型）| 🟡 参考 | ✅ |
 | [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
 | [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
-| `huginn.md` | Huginn 3.5B 笔记（latent recurrent 对比） | 🟢 对比 | ⏳ 可选 |
-| `ouro.md` | Ouro 1.4B 笔记（looped 对比） | 🟢 对比 | ⏳ 可选 |
+| `huginn.md` | Huginn 3.5B 笔记（latent recurrent 对比） | 🟢 对比 | ⏳ 合并到 rrm-survey.md §1.5 |
+| `ouro.md` | Ouro 1.4B 笔记（looped 对比） | 🟢 对比 | ⏳ 合并到 rrm-survey.md §1.5 |
+
+> 📦 **新增目录**：[../rfcs/](../rfcs/) 存放**内部 R&D 设计提案**（GRR-300M、MR-300M），不属于参考资料。
 
 ---
 
@@ -112,7 +116,25 @@ references/
 | 哪些资源可跨项目复用？ | §4 共享资源 |
 | 哪些参考材料还没收集？ | §5 研究资料收集状态 |
 
-### 3.5 我想查看论文原文 PDF/HTML → 去哪查
+### 3.5 我想了解 RRM 谱系全景 → 去哪查
+
+| 问题 | 查 [rrm-survey.md](./rrm-survey.md) 哪一节 |
+|---|---|
+| TRM / Looped TF / Hyperloop / SE-RRM / Huginn / Ouro 简介 | §1 RRM-B 谱系 |
+| Google Titans / Liquid AI / SpikingBrain / 商汤 NEO-Unify | §2 下一代架构 |
+| 架构横向对比 | §3 核心架构横向对比 |
+| 与 LatentMind 决策相关 | §5 与 LatentMind 决策相关 |
+
+### 3.6 我想了解 RRM 奖励模型（清华 RRM-A）→ 去哪查
+
+| 问题 | 查 [rrm-reward.md](./rrm-reward.md) 哪一节 |
+|---|---|
+| RRM-A 和 RRM-B 的区别？ | 顶部"重要命名歧义" |
+| 与传统 Scalar RM 区别？ | §2 对比表 |
+| 开源项目清单？ | §4 开源项目与资源 |
+| 与 LatentMind 关系？ | §6 与 LatentMind 项目的关系 |
+
+### 3.7 我想查看论文原文 PDF/HTML → 去哪查
 
 | 问题 | 查 [papers/README.md](./papers/README.md) 哪一节 |
 |---|---|

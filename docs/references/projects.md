@@ -125,24 +125,29 @@
 | 来源 | 优先级 | 状态 | 笔记 |
 |---|---|---|---|
 | **HRM-Text**（核心） | 🔴 必做 | ✅ 已收集 | [hrm-text.md](./hrm-text.md) |
-| **GRAM**（v1.5 集成） | 🔴 必做 | ✅ 源文件已下载，笔记撰写中 | [gram.md](./gram.md) ⏳ |
+| **GRAM**（v1.5 集成） | 🔴 必做 | ✅ v2 增强版（含 ELBO/MLP/N_sup/1B 风险）| [gram.md](./gram.md) |
 | HRM 原始 27M（符号版本） | 🟡 参考 | ✅ 已收集 | [hrm-original.md](./hrm-original.md) |
 | TRM（小型递归） | 🟢 可选 | ✅ 已收集 | [trm.md](./trm.md) |
+| **RRM 谱系调查** | 🟡 重要 | ✅ 已整理 | [rrm-survey.md](./rrm-survey.md) |
+| RRM 奖励模型（清华） | 🟡 参考 | ✅ 已整理 | [rrm-reward.md](./rrm-reward.md) |
 
 ### 5.2 待补充
 
 | 来源 | 优先级 | 状态 |
 |---|---|---|
-| Ouro 1.4B（对比基线） | 🟢 可选 | ⏳ 待收集（arXiv ID 待查）|
-| Huginn 3.5B（对比基线） | 🟢 可选 | ⏳ 待收集（arXiv ID 待查）|
+| **Huginn / Ouro 原始 arXiv** | 🟢 可选 | ⏳ 待查（已在 [rrm-survey.md §1.5](./rrm-survey.md#15-huginn--ouro) 标注） |
 | HRM-MoE（社区扩展） | 🟡 备选方案 | ⏳ 待收集（GitHub: XiaoYee/HRM-MoE，无 paper）|
 | MagicNorm 原始论文 | 🟡 深入理解 | ⏳ 待收集（HRM 论文内的概念，无独立 paper）|
 | AdamATan2 优化器 | 🟡 复现细节 | ⏳ 待收集（HRM-Text 论文 [20] 引用）|
 | FlashAttention 3 | 🟡 部署相关 | ⏳ 通用知识，不专列 |
+| Liquid AI / SpikingBrain 公开模型 | 🟢 远期 | ⏳ 见 [rrm-survey.md §2](./rrm-survey.md#2-下一代架构的更广泛探索) |
 
 ### 5.3 源文件位置
 
-所有论文源文件（PDF/HTML）存放在 [`papers/`](./papers/) 子目录。
+| 资源 | 位置 |
+|---|---|
+| 论文源文件（PDF/HTML）| [`papers/`](./papers/) |
+| 内部 R&D 设计提案 | [`../rfcs/`](../rfcs/) |
 
 ---
 
