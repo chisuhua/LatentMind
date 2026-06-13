@@ -6,6 +6,12 @@
 **定位**：ChipForge APU 的认知核，<1B 参数，物理 AI 端侧推理
 **架构核心**：HRM-Text latent space reasoning + GRAM multi-trajectory reasoning
 
+> 📦 **参考文档体系**（详见各文件）：
+> - 总体架构：[`docs/architecture.md`](docs/architecture.md)
+> - 外部研究笔记：[`docs/references/README.md`](docs/references/README.md)（HRM-Text、GRAM、TRM、RRM 谱系等）
+> - 内部 R&D 提案：[`docs/rfcs/README.md`](docs/rfcs/README.md)（GRR-300M、MR-300M 草案）
+> - 相关项目元信息：[`docs/references/projects.md`](docs/references/projects.md)（ChipForge / HydraForge / AgenticLlama / minimind）
+
 ---
 
 ## 2. 技术架构（v1.0）

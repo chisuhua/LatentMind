@@ -23,21 +23,23 @@
 - **作者**：Alexia Jolicoeur-Martineau（Samsung SAIL Montréal）
 - **架构特点**：与 HRM 复杂的"分层双时间尺度"不同，TRM 走"**极简路线**"——只保留 3 个核心元素：输入、当前答案和隐式推理状态
 - **循环机制**：单网络 2 层在潜空间中对当前答案反复迭代改进
-- **定位**：证明"极简递归"也能替代庞大参数堆叠；**7M 模型在 ARC-AGI-1 上达到 87.4%（vs HRM 27M 的 55%）**
+- **定位**：证明"极简递归"也能替代庞大参数堆叠；**7M 模型在 Sudoku-Extreme 上达到 87.4%（vs HRM 27M 的 55.0%）；在 ARC-AGI-1 上达到 44.6%（vs HRM 27M 的 40.3%）**
 - **详细笔记**：[trm.md](./trm.md)
 
 ### 1.2 Looped Transformer（循环 Transformer）
 
-- **论文**：[arXiv 2604.21254](https://arxiv.org/abs/2604.21254) *Hyperloop Transformers*（最近的工作）
+- **论文**：[arXiv 2604.15259](https://arxiv.org/abs/2604.15259) *Stability and Generalization in Looped Transformers*
 - **架构特点**：核心是"**参数复用**"——同一 Transformer 块循环执行多次
 - **循环机制**：在深度/时间维度上内部循环，权重共享
 - **定位**：不增加参数规模的前提下，通过增加计算时间提升模型能力；参数高效利用的早期探索
+- **关联**：[Universal Transformers (arXiv 1807.03819)](https://arxiv.org/abs/1807.03819) 是更早期的"循环共享"思想原型
 
 ### 1.3 Hyperloop Transformer
 
-- **论文**：[arXiv 2604.21254](https://arxiv.org/abs/2604.21254)
-- **架构特点**：在 Looped Transformer 基础上引入"超连接（Hyper-connections）"优化循环中间块
+- **论文**：[arXiv 2604.21254](https://arxiv.org/abs/2604.21254) *Hyperloop Transformers*（Zeitoun, Torroba-Hennigen, Kim）
+- **架构特点**：在 Looped Transformer 基础上引入"**超连接（Hyper-connections）**"优化循环中间块（begin / middle / end 三段）
 - **定位**：从 LM 参数效率角度让循环架构在自然语言处理中更稳定
+- **与 §1.2 区别**：Looped TF（§1.2）只循环 + 共享权重；Hyperloop（§1.3）额外加跨层超连接以解决信息瓶颈和梯度衰减
 
 ### 1.4 SE-RRM（Symbol-Equivariant Recurrent Reasoning Models）
 

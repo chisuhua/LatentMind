@@ -2,7 +2,7 @@
 
 > **论文**：*Reward Reasoning Model*
 > **作者**：Jiaxin Guo, Zewen Chi, Li Dong, Qingxiu Dong, Xun Wu, Shaohan Huang, Furu Wei（7 人）
-> **机构**：**清华大学**（注意：不是"微软/清华/北大联合"）
+> **机构**：⚠️ **待核实**（arXiv abs 页不显示 affiliation；作者中 Furu Wei / Li Dong / Dong Qingxiu 历史发表多挂 **Microsoft Research Asia**。**不要在没有 PDF 截图的情况下断言具体 affiliation**）
 > **arXiv**：[2505.14674](https://arxiv.org/abs/2505.14674)
 > **本地源**：（未下载）
 > **创建日期**：2026-06

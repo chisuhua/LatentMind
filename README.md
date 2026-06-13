@@ -51,9 +51,26 @@ LatentMind/
 │   ├──解码器/        # 双流解码器
 │   └── utils/        # 工具
 ├── docs/             # 技术文档
+│   ├── architecture.md    # 总体技术架构
+│   ├── references/        # 外部研究参考笔记
+│   │   ├── hrm-text.md   # HRM-Text 论文笔记（v1.0 backbone）
+│   │   ├── gram.md       # GRAM 论文笔记（v1.5 扰动）
+│   │   ├── trm.md        # TRM 笔记
+│   │   ├── hrm-original.md  # HRM 原始 27M
+│   │   ├── rrm-reward.md # RRM-A 奖励推理
+│   │   ├── rrm-survey.md # RRM-B 谱系调查
+│   │   ├── projects.md   # 相关项目元信息
+│   │   ├── papers/       # 论文 PDF/HTML 源文件
+│   │   └── README.md     # 索引
+│   └── rfcs/             # 内部 R&D 提案
+│       ├── README.md
+│       ├── grr-300-gated-recursive-refiner.md  # 📝 草案
+│       └── mr-300-micro-refiner.md              # 📝 草案
 ├── tests/            # 测试
 └── examples/         # 示例
 ```
+
+> 📦 区分 `docs/references/`（外部研究笔记）和 `docs/rfcs/`（内部 R&D 提案）。详见 [docs/rfcs/README.md](docs/rfcs/README.md)。
 
 ---
 

@@ -1,7 +1,7 @@
 # GRAM（Generative Recursive reAsoning Models）参考资料
 
 > **论文**：*Generative Recursive reAsoning Models (GRAM)*
-> **作者**：Junyeob Baek, Mingyu Jo, Minsu Kim, Yoshua Bengio, Sungjin Ahn
+> **作者**：Junyeob Baek, Mingyu Jo, Minsu Kim, **Mengye Ren**, Yoshua Bengio, Sungjin Ahn（6 人）
 > **机构**：KAIST, NYU, Mila
 > **arXiv**：2605.19376（2026-05-22）
 > **会议**：ICLR 2026 Workshop RSI Poster
