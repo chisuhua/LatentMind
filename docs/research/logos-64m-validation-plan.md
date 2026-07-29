@@ -26,6 +26,78 @@
 
 ---
 
+## 0+. 共享前置验证（Phase 0，~5 周）
+
+> 📌 **2026-07-29 v1.3 新增**：明确 Logos / SADKO 双轨共享的**前置依赖**——这些验证必须在 Logos 64M 训练之前完成。
+>
+> 详见双轨协调文档：[logos-sadko-64m-coordination.md §2](./logos-sadko-64m-coordination.md#2-phase-0共享前置验证-5-周)
+>
+> ⚠️ **关键提示**：Phase 0 不通过，禁止启动 Phase 1（v1.0 - v3.0）的任何架构改造实验。
+
+### Phase 0 必做项（来自协调文档）
+
+| # | 任务 | 周期 | 必需性 | Logos 影响 |
+|---|------|------|:---:|----------|
+| P.0.1 | MiniMind3 64M Dense 从零训练基线 | 1 周 | 🔴 必须 | 决定基座可行性 |
+| P.0.2 | 3 层 CNN 感知层映射 | 1 周 | 🔴 必须 | Logos 共用感知层 |
+| P.0.3 | 数据 pipeline + tokenizer | 3 天 | 🟠 必需 | 训练效率 |
+| P.0.4 | 训练基础设施 | 3 天 | 🟠 必需 | 训练稳定性 |
+| P.0.5 | 评估框架（统一可比） | 1 周 | 🔴 必须 | 决定评估有效性 |
+| P.0.6 | 端侧并行化基础设施 | 1 周 | 🟡 Logos 专用 | 决定 Logo s 端侧可行性 |
+
+**Phase 0 失败后果**：
+- P.0.1 失败 → Logos / SADKO 都需重新选择基座 → **延后 +1 月**
+- P.0.2 失败 → 感知层架构变更 → **重新设计** Phase 1 v1.0
+- P.0.5 失败 → Logos / SADKO 评估结果不可比 → **跨路线决策失效**
+
+### Phase 0 与 Logos 64M 三阶段的关系
+
+```
+Phase 0（共享，~5 周）
+├─ P.0.1 - P.0.6 全部通过
+├─ Logos 64M v1.0 启动（A.1-A.4 双时间尺度对比）
+└─ SADKO 64M v1.0 启动（并行，分时段共享 GPU）
+
+Phase 0 是 v1.0 的**前置许可证**——Phase 0 不通过，禁止启动 v1.0。
+```
+
+### Logos 64M 的特殊需求
+
+**P.0.6 端侧并行化基础设施**对 Logos 特别关键：
+- Radix Cache 必须实现（v2.0 B.4 + v3.0 C.2 都依赖）
+- Per-Token 早退必须实现（v2.0 B.3 依赖）
+- Hierarchical 推理必须实现（v2.0 B.5 依赖）
+
+**若 P.0.6 失败**：Logos 端侧可行性受严重影响，可能需要退回到单路径方案，丧失并行化优势。
+
+---
+
+## 0++. 交叉验证（Phase 2，Month +5 末 ~2 周）
+
+> 📌 **2026-07-29 v1.3 新增**：Logos / SADKO 在 64M 训练完成后，需在统一评估框架下对比，作为决策依据。
+
+详见 [logos-sadko-64m-coordination.md §4](./logos-sadko-64m-coordination.md#4-phase-2交叉验证-2-周month-5-末)。
+
+**六类对比任务**：
+
+| 类别 | Logos 预期优势 | SADKO 预期优势 |
+|------|--------------|--------------|
+| **推理** (GSM8K mini) | ✅ 分层循环 | — |
+| **代码** (MultiPL-E mini) | ✅ 循环精炼 | — |
+| **决策** (nuScenes multi-path) | — | ✅ 多轨迹 |
+| **记忆** (Recall@64) | — | ✅ MemPool + FSQ |
+| **端侧** (单 token 延迟) | ✅ K=2 + 早退 | — |
+| **多模态** (CIFAR-10) | ⚠️ 简单 | ✅ 流形压缩 |
+
+**禁止各路线私自评估**——必须用 P.0.5 统一脚本。
+
+**决策依据**（详见协调文档 §5）：
+- Logos 推理强 + SADKO 记忆强 + 融合可行 → **双轨并行**（首选）
+- 任一路线全面胜出 → **单轨升格**
+- 双轨都失败 → **退回通用 Transformer**
+
+---
+
 ## 1. 与 SADKO 64M 的关键差异
 
 | 维度 | **SADKO 64M** | **Logos 64M**（本计划）|
@@ -295,22 +367,31 @@ Week 10+:   交付《Logos 64M 验证报告》
 
 ## 11. 与 SADKO 64M 的协同
 
-### 11.1 共享资源
+> 📌 **2026-07-29 v1.3 重要更新**：本节内容已整合到 [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md)，作为双轨协调中枢。
+
+### 11.1 协调机制
+
+**核心文档**：[logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md)
+
+**关键协调点**：
+- **共享 Phase 0**：6 项前置验证（~5 周）—— 见协调文档 §2
+- **并行 Phase 1**：Logos / SADKO 分时段共享 RTX 3090（周一-三 Logos，周四-六 SADKO）
+- **交叉 Phase 2**：Month +5 末统一评估（~2 周）—— 见协调文档 §4
+- **决策 Phase 3**：Month +6 决策升格（双轨 / 单轨 / 退回）—— 见协调文档 §5
+
+### 11.2 共享 vs 不共享
 
 | 共享项 | 说明 |
 |-------|------|
-| **MiniMind3 64M 基座** | 同（但**每条路线独立训练**）|
-| **训练硬件** | 同一 RTX 3090（不同时段使用）|
-| **训练框架** | MiniMind3 原始 train_pretrain.py（仅参考）|
-| **部分工具代码** | KV cache 管理、量化算子 |
-
-### 11.2 不共享的设计
+| **Phase 0 共享前置** | MiniMind3 基线 + CNN 感知层 + 评估框架 |
+| **训练硬件** | 同一 RTX 3090（分时段使用）|
+| **评估框架** | 统一脚本，禁用私自评估 |
 
 | 不共享 | Logos | SADKO |
 |--------|-------|-------|
 | **核心改造** | HRM H/L + Split-GQA 借鉴 | AR + Split-GQA + Dual-Path FFN |
-| **任务** | 推理 + 决策 | 记忆 + 多模态 |
-| **循环策略** | 核心研究（K-sweep、Radix Cache）| 不核心（依赖 Cross-Attention 读取）|
+| **任务聚焦** | 推理 + 决策 | 记忆 + 多模态 |
+| **循环策略** | 核心研究（Radix Cache、PLT、层次化）| 不核心（依赖 MemPool + FSQ）|
 
 ### 11.3 互不依赖原则
 
@@ -318,6 +399,8 @@ Week 10+:   交付《Logos 64M 验证报告》
 - Logos 64M 失败 → 300M 用 A.1 稳健方案
 - SADKO 64M 失败 → Logos 不依赖 SADKO
 - 融合失败 → 双路线独立运行
+
+**详细论证 + 完整决策矩阵**：见 [logos-sadko-64m-coordination.md §5](./logos-sadko-64m-coordination.md#5-phase-3决策-month-6-末)
 
 ---
 

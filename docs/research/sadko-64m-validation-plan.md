@@ -8,6 +8,89 @@
 
 ---
 
+## 〇+、共享前置验证（Phase 0，~5 周，与 Logos 共用）
+
+> 📌 **2026-07-29 v1.5 新增**：SADKO 64M 训练**也依赖** Phase 0 共享前置验证——这是双轨协调的关键发现。
+>
+> 详见双轨协调文档：[logos-sadko-64m-coordination.md §2](./logos-sadko-64m-coordination.md#2-phase-0共享前置验证-5-周)
+>
+> ⚠️ **关键提示**：Phase 0 不通过，禁止启动 SADKO 64M v1.0 / v2.0 / v3.0 的任何架构改造实验。
+
+### 为什么 SADKO 也需要 Phase 0
+
+SADKO 文档中已有"〇、MiniMind3 64M Dense 基座调研"——这是**架构调研**而非**训练验证**。我们犯了混淆：调研只是"看"，没"训"。
+
+Phase 0 补充了关键的训练验证，**两者并存**：
+- 〇（调研）：MiniMind3 架构是什么、参数多少、约束是什么（**已完成**）
+- 〇+（Phase 0 训练验证）：MiniMind3 能从零训练到合理 PPL 吗、感知层可训练吗、评估框架 OK 吗（**待完成**）
+
+### Phase 0 必做项（来自协调文档）
+
+| # | 任务 | 周期 | 必需性 | SADKO 影响 |
+|---|------|------|:---:|----------|
+| P.0.1 | MiniMind3 64M Dense 从零训练基线 | 1 周 | 🔴 必须 | 决定基座可行性 |
+| P.0.2 | 3 层 CNN 感知层映射 | 1 周 | 🔴 必须 | SADKO 多模态基础 |
+| P.0.3 | 数据 pipeline + tokenizer | 3 天 | 🟠 必需 | 训练效率 |
+| P.0.4 | 训练基础设施 | 3 天 | 🟠 必需 | 训练稳定性 |
+| P.0.5 | 评估框架（统一可比） | 1 周 | 🔴 必须 | 决定跨路线评估有效性 |
+| P.0.6 | 端侧并行化基础设施 | 1 周 | 🟢 Logos 专用 | SADKO 不直接依赖 |
+
+**Phase 0 失败后果**：
+- P.0.1 失败 → SADKO / Logos 都需重新选择基座 → **延后 +1 月**
+- P.0.2 失败 → 多模态基础不可行 → **重做 SADKO 多模态部分**
+- P.0.5 失败 → SADKO / Logos 评估结果不可比 → **双轨决策失效**
+
+### Phase 0 与 SADKO 三阶段的关系
+
+```
+Phase 0（共享，~5 周）
+├─ P.0.1 - P.0.6 全部通过
+└─ SADKO 64M 启动（L1/L2/L3 三阶段）
+   ├─ v1.0：Split-GQA + Dual-Path FFN（左脑改造）
+   ├─ v2.0：MemPool + 192 维压缩读取
+   └─ v3.0：ELF-Lite + FSQ + 扩散对齐 + 四大实验
+
+Phase 0 是 SADKO 64M v1.0 / v2.0 / v3.0 的**前置许可证**。
+```
+
+### SADKO 64M 的特殊需求
+
+**P.0.2 CNN 感知层**对 SADKO 多模态至关重要：
+- SADKO 的 ELF 流形压缩需要 3 层 CNN 作为感知入口
+- 若 P.0.2 失败，**多模态**作为 SADKO 优势会大打折扣
+
+**P.0.5 评估框架**对 SADKO 决策关键：
+- "检索 Recall@64"是 SADKO 关键评估指标
+- 必须用统一脚本评估 SADKO 与 Logos 对比
+
+---
+
+## 〇++、交叉验证（Phase 2，Month +5 末 ~2 周）
+
+> 📌 **2026-07-29 v1.5 新增**：SADKO 64M 训练完成后，需在统一评估框架下与 Logos 对比。
+
+详见 [logos-sadko-64m-coordination.md §4](./logos-sadko-64m-coordination.md#4-phase-2交叉验证-2-周month-5-末)。
+
+**六类对比任务与 SADKO 预期表现**：
+
+| 类别 | SADKO 预期表现 |
+|------|-------------|
+| **推理** (GSM8K mini) | ⚠️ 中等（非 SADKO 优势域）|
+| **代码** (MultiPL-E mini) | ⚠️ 中等 |
+| **决策** (nuScenes multi-path) | ✅ **强**：MemPool + 多轨迹 |
+| **记忆** (Recall@64) | ✅ **强**：MemPool + FSQ 码本 |
+| **端侧** (单 token 延迟) | ⚠️ 中等（依赖融合接口）|
+| **多模态** (CIFAR-10) | ✅ **强**：双向 + Flow Matching |
+
+**决策依据**（详见协调文档 §5）：
+- Logos 推理强 + SADKO 记忆强 + 融合可行 → **双轨并行**（最可能）
+- SADKO 在多任务胜出 → **SADKO 升格主线**
+- 双轨都失败 → **退回通用 Transformer**
+
+**禁止各路线私自评估**——必须用 P.0.5 统一脚本。
+
+---
+
 ## 〇、MiniMind3 64M Dense 基座调研
 
 ### 原始架构

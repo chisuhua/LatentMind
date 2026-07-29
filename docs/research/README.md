@@ -62,6 +62,12 @@
 | [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 架构设计：五种循环策略对比——串行 K、PLT/HLT-PLT、Per-Token 早退、Radix Cache 多路径、层次化推理；延迟-精度 Pareto + 详细实验设计 | ✅ 新增 |
 | [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 架构设计：GRAM + Radix Cache 多路径 + 测试时 scaling 曲线；端侧多假设决策完整方案 | ✅ 新增 |
 
+### 2.1+ 双轨协调中枢
+
+| 文件 | 内容 | 状态 |
+|---|---|---|
+| [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md) | **Logos / SADKO 双轨 64M 协调中枢**：Phase 0 共享前置验证（~5 周）+ Phase 1 并行验证 + Phase 2 交叉验证 + Phase 3 决策矩阵；2026-07-29 关键缺口发现后新增 | ✅ 新增 |
+
 ### 2.2 SADKO 探索分支文档
 
 | 文件 | 内容 | 状态 |

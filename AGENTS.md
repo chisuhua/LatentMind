@@ -19,6 +19,7 @@
 > - **Logos K 值策略**：[`docs/research/logos-k-strategy.md`](docs/research/logos-k-strategy.md)
 > - **Logos 路线图**：[`docs/research/logos-roadmap.md`](docs/research/logos-roadmap.md)
 > - **Logos 64M 验证计划**：[`docs/research/logos-64m-validation-plan.md`](docs/research/logos-64m-validation-plan.md)
+> - **Logos / SADKO 双轨协调中枢**：[`docs/research/logos-sadko-64m-coordination.md`](docs/research/logos-sadko-64m-coordination.md)（Phase 0 共享前置 + 交叉验证 + 决策矩阵）
 > - **Logos v1.0 架构（双时间尺度对比）**：[`docs/research/logos-v1-architecture.md`](docs/research/logos-v1-architecture.md)
 > - **Logos v2.0 架构（多种循环策略）**：[`docs/research/logos-v2-architecture.md`](docs/research/logos-v2-architecture.md)
 > - **Logos v3.0 架构（GRAM + Radix Cache）**：[`docs/research/logos-v3-architecture.md`](docs/research/logos-v3-architecture.md)
