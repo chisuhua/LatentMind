@@ -45,9 +45,13 @@
 
 | 文件 | 内容 | 状态 |
 |---|---|---|
-| [logos-whitepaper.md](./logos-whitepaper.md) | **Logos 主线架构白皮书**：循环即推理 + 多轨迹即决策 + 端侧哲学；v1.0 Demo + v1.5 完整架构蓝图；与 ChipForge APU 集成；与 SADKO 双轨分工；风险与降级；演进路径 | ✅ 新增 |
-| [logos-k-strategy.md](./logos-k-strategy.md) | **Logos K 值策略与端侧可行性**：LoopCoder-v2 的主线消化 + K=2 默认策略 + per-token early exit + PLT 并行化移植 + 端侧时延预算 + RDD-0001 降级为 Plan B | ✅ 新增 |
-| [logos-roadmap.md](./logos-roadmap.md) | **Logos 主线路线图**（+0 到 +12 月）：详细里程碑、验收标准、与 SADKO 协同、双轨分工决策时间表 | ✅ 新增 |
+| [logos-whitepaper.md](./logos-whitepaper.md) | **Logos 主线架构白皮书**：循环即推理 + 多轨迹即决策 + 端侧哲学；v1.0 Demo + v1.5 完整架构蓝图；与 ChipForge APU 集成；与 SADKO 双轨分工；风险与降级；演进路径 | ✅ |
+| [logos-k-strategy.md](./logos-k-strategy.md) | **Logos K 值策略与端侧可行性**：LoopCoder-v2 的主线消化 + K=2 默认策略 + per-token early exit + **PLT/HLT-PLT + Radix Cache 多路径 + 层次化推理**三方案 + 端侧时延预算 + RDD-0001 降级为 Plan B | ✅ |
+| [logos-roadmap.md](./logos-roadmap.md) | **Logos 主线路线图**（+0 到 +12 月）：详细里程碑、验收标准、与 SADKO 协同、双轨分工决策时间表 | ✅ |
+| [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) | **Logos-Native-64M 三阶段验证计划**：v1.0 双时间尺度对比 → v2.0 多种循环策略 → v3.0 GRAM + Radix Cache，10 周单卡 3090（含 SADKO Split-GQA 借鉴 + 与 SADKO 64M 协同）| ✅ 新增 |
+| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 架构设计：四种"双时间尺度"实现——HRM H/L、SADKO Split-GQA、混合风格、标准 Transformer；详细施工图 + 权重初始化 + 4 个对照实验 | ✅ 新增 |
+| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 架构设计：五种循环策略对比——串行 K、PLT/HLT-PLT、Per-Token 早退、Radix Cache 多路径、层次化推理；延迟-精度 Pareto + 详细实验设计 | ✅ 新增 |
+| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 架构设计：GRAM + Radix Cache 多路径 + 测试时 scaling 曲线；端侧多假设决策完整方案 | ✅ 新增 |
 
 ### 2.2 SADKO 探索分支文档
 
@@ -84,6 +88,10 @@
 | Logos 演进路径（64M 验证 → 1B 端侧 → 1.5B 完整）？ | §7 |
 | K 值策略、LoopCoder-v2 应对？ | [logos-k-strategy.md](./logos-k-strategy.md) |
 | 详细路线图与决策时间表？ | [logos-roadmap.md](./logos-roadmap.md) |
+| Logos 64M 验证计划（v1.0/v2.0/v3.0 三阶段）？ | [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) |
+| 四种"双时间尺度"实现对比（HRM/Split-GQA/混合）？ | [logos-v1-architecture.md §3](./logos-v1-architecture.md#3-四种双时间尺度实现方案) |
+| 五种循环策略延迟-精度 Pareto？ | [logos-v2-architecture.md §4](./logos-v2-architecture.md#4-五策略延迟-精度-pareto-对比) |
+| GRAM + Radix Cache 多路径决策？ | [logos-v3-architecture.md §3](./logos-v3-architecture.md#3-radix-cache-多路径集成c2) |
 
 #### SADKO 探索分支（感知 + 记忆 + 知识 + 多模态）
 

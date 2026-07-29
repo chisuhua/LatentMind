@@ -11,10 +11,14 @@
 > - **Logos 主线白皮书**：[`docs/research/logos-whitepaper.md`](docs/research/logos-whitepaper.md)
 > - **Logos K 值策略**：[`docs/research/logos-k-strategy.md`](docs/research/logos-k-strategy.md)
 > - **Logos 路线图**：[`docs/research/logos-roadmap.md`](docs/research/logos-roadmap.md)
+> - **Logos 64M 验证计划**：[`docs/research/logos-64m-validation-plan.md`](docs/research/logos-64m-validation-plan.md)
+> - **Logos v1.0 架构（双时间尺度对比）**：[`docs/research/logos-v1-architecture.md`](docs/research/logos-v1-architecture.md)
+> - **Logos v2.0 架构（多种循环策略）**：[`docs/research/logos-v2-architecture.md`](docs/research/logos-v2-architecture.md)
+> - **Logos v3.0 架构（GRAM + Radix Cache）**：[`docs/research/logos-v3-architecture.md`](docs/research/logos-v3-architecture.md)
 > - **SADKO 白皮书**：[`docs/research/sadko-whitepaper.md`](docs/research/sadko-whitepaper.md)
 > - **SADKO 多模态原生设计**：[`docs/research/sadko-multimodal-native.md`](docs/research/sadko-multimodal-native.md)
 > - 外部研究笔记：[`docs/references/README.md`](docs/references/README.md)（HRM-Text、GRAM、TRM、RRM 谱系、LoopCoder-v2、Huginn、STARS、Per-Token Convergence 等）
-> - 内部 R&D 提案：[`docs/rfcs/README.md`](docs/rfcs/README.md)（GRR-300M、MR-300M、RDD-0001 K-sweep Plan B 等）
+> - 内部 R&D 提案：[`docs/rfcs/README.md`](docs/rfcs/README.md)（GRR-300M、MR-300M、RDD-0001 已合并到 logos-v2 等）
 > - 相关项目元信息：[`docs/references/projects.md`](docs/references/projects.md)（ChipForge / HydraForge / AgenticLlama / minimind）
 
 ---
@@ -194,3 +198,8 @@ HRM-Text backbone（~850M）       ← 预训练权重直接用
 > - K-sweep 实验从"阻塞性前置"降级为"Plan B"，详见 [logos-k-strategy.md](docs/research/logos-k-strategy.md)
 > - §6 里程碑简化，去掉 K-sweep 阻塞项
 > - §7.2 K 值策略调整
+> 📌 **v1.3 变更**（2026-07-29）：
+> - 新增 Logos 64M 验证文档体系：[logos-64m-validation-plan.md](docs/research/logos-64m-validation-plan.md)（10 周三阶段）+ [logos-v1-architecture.md](docs/research/logos-v1-architecture.md)（双时间尺度对比）+ [logos-v2-architecture.md](docs/research/logos-v2-architecture.md)（五种循环策略）+ [logos-v3-architecture.md](docs/research/logos-v3-architecture.md)（GRAM + Radix Cache）
+> - 借鉴 SADKO Split-GQA + 异构 RoPE（数学同构于 HRM H/L）
+> - 引入 Radix Cache 多路径并行 + 层次化推理（突破 K>4 端侧约束）
+> - RDD-0001 合并到 logos-v2-architecture.md §3.1

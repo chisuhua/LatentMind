@@ -1,6 +1,6 @@
 # RFC: HRM-Text 循环深度 K-sweep 前置实验（RDD-0001）
 
-> **状态**：📝 **Plan B 草案**（v1.1 — 2026-07-29 **降级**）
+> **状态**：📝 **已合并到 logos-v2-architecture.md**（v1.2 — 2026-07-29）
 > **作者**：来自工作流（LoopCoder-v2 论文冲击波分析）
 > **目标规模**：MiniMind3 64M（快速消融）→ HRM-Text 1B（条件性验证）
 > **目标场景**：作为 **Logos 主线集成的 Plan B 预案**——仅在 K=8 集成失败时启动
@@ -9,35 +9,39 @@
 >   - K=8 出现 gain-then-collapse 现象
 >   - 端侧 K 必须 ≤ 2 时
 > **与项目的关系**：**不再是主线前置阻塞**，而是集成失败后的快速消融方案
+>
+> ⚠️ **2026-07-29 重要变更**：本 RFC 内容已**合并到** [docs/research/logos-v2-architecture.md §3.1](../research/logos-v2-architecture.md)（多种循环策略对比 §B.1 串行 K 循环基线）。该文档现在仅作为 RFC 引用入口保留，详细实验设计见 logos-v2-architecture.md。
+>
 > **关联文档**：
+> - **合并目标**：[docs/research/logos-v2-architecture.md §3.1](../research/logos-v2-architecture.md)（B.1 串行 K 循环基线）
 > - 上游论证：[docs/references/loopcoder-v2.md](../references/loopcoder-v2.md)
 > - 反例：[docs/references/huginn.md](../references/huginn.md)
 > - 修复方案：[docs/references/stars.md](../references/stars.md)
 > - 动态 K 证据：[docs/references/per-token-convergence.md](../references/per-token-convergence.md)
 > - Logos K 策略：[../research/logos-k-strategy.md](../research/logos-k-strategy.md)
+> - Logos 64M 验证计划：[../research/logos-64m-validation-plan.md](../research/logos-64m-validation-plan.md)
 > - HRM-Text 主线：[docs/references/hrm-text.md](../references/hrm-text.md)
-
-> ⚠️ **本 RFC 是实验设计提案，未实现也未验证**。所有 K 值、指标阈值、资源估算均基于理论推演 + 外部论文数据，正式实验需重新校准。
 
 ---
 
 ## 1. 摘要
 
-### 1.1 一句话总结（Plan B 版本）
+> 📌 **本 RFC 主体内容已迁移到 [logos-v2-architecture.md §3.1](../research/logos-v2-architecture.md#31-b1-串行-k-循环基线)。本节仅保留 RFC 状态与决策树，详情请查阅合并目标文档。**
 
-**作为 Logos 集成失败的 Plan B：在 MiniMind3 64M 上跑 K ∈ {2, 4, 8} 快速消融（<10h），找出在不超端侧时延预算前提下的最优 K 值**。
+### 1.1 一句话总结
 
-### 1.2 实验范围收缩（vs 原方案）
+**作为 Logos 集成失败的 Plan B：在 MiniMind3 64M 上跑 K ∈ {2, 4, 8} 快速消融，找出在不超端侧时延预算前提下的最优 K 值**。
 
-| 维度 | 原阻塞方案 | Plan B 方案 |
-|------|----------|-----------|
-| K 值数 | 6（{1, 2, 4, 6, 8, 12}）| 3（{2, 4, 8}）|
-| 子实验数 | 4（A/B/C/D）| 2（仅 A + B）|
-| 数据集数 | 5（GSM8K + HumanEval+ + ARC-AGI + WikiText + MultiPL-E）| 1（GSM8K，最关键）|
-| 训练时长 | ~54h | <10h |
-| 时序 | 主线前置（+0 月启动）| 集成失败后启动 |
+### 1.2 实验范围（与 logos-v2-architecture.md §B.1 对齐）
 
-> 📌 **核心降级理由**：LoopCoder-v2 已证明循环架构方向正确（K=2 > K=1），K-sweep 不再需要"验证架构方向"，只需"找最优点"。范围收缩 5×。
+| 维度 | 值 |
+|------|------|
+| K 值 | {2, 4, 8} |
+| 数据集 | GSM8K（推理任务代表）|
+| 训练时长 | <10h |
+| 触发条件 | 见 [logos-v2-architecture.md §1 验收标准](../research/logos-v2-architecture.md#1-设计目标) |
+
+**注**：本 RFC 内容已被 Logos 64M 验证计划**完全吸收**（[logos-64m-validation-plan.md §3 v2.0](../research/logos-64m-validation-plan.md#3-v20多种循环策略对比)）。如需更新设计，请编辑 [logos-v2-architecture.md](../research/logos-v2-architecture.md)，本 RFC 仅保留为历史引用入口。
 
 ### 1.2 关键问题
 

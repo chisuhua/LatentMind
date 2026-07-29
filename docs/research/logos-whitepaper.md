@@ -123,6 +123,15 @@ for _ in range(H_cycles):     # 2
 return z_H
 ```
 
+**借鉴 SADKO Split-GQA + 异构 RoPE**（2026-07-29 增补）：HRM 与 SADKO 在数学上**独立发现同一洞察**——"双时间尺度"。
+
+| SADKO Split-GQA | HRM H/L | 数学本质 |
+|----------------|---------|---------|
+| Static KV heads (base=500k) | H module (慢速) | 长程信息 |
+| Dynamic KV heads (base=10k) | L module (快速) | 短程信息 |
+
+**关键整合**：Logos H/L block 内部采用 Split-GQA 风格——H block 用更多 Static heads（长程），L block 用更多 Dynamic heads（短程）。**双时间尺度在 block 维度和 head 维度同时存在**。详细对比见 [logos-v1-architecture.md §3](./logos-v1-architecture.md#3-三种双时间尺度实现方案)。
+
 **双时间尺度作用**：
 - **H 慢速**（2 cycles）：全局逻辑、长程因果、"生成式语义"的宏观布局
 - **L 快速**（每 H 周期 3 cycles）：局部高频特征、边缘、小目标和细粒度对齐
@@ -148,6 +157,30 @@ return z_H
 - 简单任务：K=1（不注入噪声）
 - 中等任务：K=2 + ε ~ N(0, σ²I)，σ 较小
 - 复杂决策：K=4-8 + ε 较大，多轨迹综合
+
+**端侧化：Radix Cache 多路径并行**（2026-07-29 增补）
+
+GRAM 多轨迹在端侧 K=4-8 串行 = 4-8 倍延迟。**Radix Cache 多路径并行**让 N 条轨迹在同一 forward 内并行：
+
+```python
+# 简化版 Radix Cache + GRAM 多路径
+def radix_cache_gram(x, n_paths=4, K=2):
+    base_h = prefill(x)  # 共享前缀
+    radix_cache = RadixTree(base_h)
+    
+    # N 条轨迹并行采样
+    paths = []
+    for i in range(n_paths):
+        eps_i = sample_eps()  # 每条轨迹独立噪声
+        h_i = base_h.clone()
+        for k in range(K):
+            h_i = hrm_block(h_i, x, eps_i, cache=radix_cache)
+        paths.append(h_i)
+    
+    return aggregate(paths)  # 综合 N 条轨迹
+```
+
+**延迟**：N=4 路径 × K=2 = 8 步推理，延迟 ≈ **1 次 K=8 forward**（路径并行）。端侧预算内可行。详细见 [logos-v3-architecture.md](./logos-v3-architecture.md)。
 
 ### 2.4 模块 C：双流解码层（~100M）
 

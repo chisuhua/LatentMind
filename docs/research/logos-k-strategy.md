@@ -118,23 +118,28 @@ def dynamic_K_forward(x, max_K=4, epsilon=1e-4):
 
 ---
 
-## 4. PLT 并行化移植到 HRM（Latency Killer）
+## 4. 多种端侧并行化策略（Latency Killer）
 
-### 4.1 为什么需要 PLT 移植
+> **核心洞察**：端侧约束下，**K>4 串行循环实际价值很小**——4 倍延迟对自动驾驶/对话场景不可接受。必须用并行化策略代替。
 
-**痛点**：HRM-Text K=8 串行循环 = 8 倍延迟。即使 K=2 也是 2 倍延迟。
+### 4.1 为什么 K>4 串行循环无价值
+
+| K | 单 token 延迟 | 应用场景 |
+|:---:|:---:|---|
+| K=1 | 50ms | ✅ 自动驾驶感知 |
+| K=2 | 100ms | ✅ 实时对话 |
+| K=4 | 200ms | ⚠️ 仅离线规划 |
+| K=8 | 400ms | ❌ 完全不可用 |
+
+**核心问题**：K>4 在端侧 = 用不起 = 实际价值≈0。**Logos 默认 K ≤ 2 + 多种并行化策略扩展**。
+
+### 4.2 PLT/HLT-PLT 移植（K 循环并行）
 
 **PLT 的解法**（详见 [loopcoder-v2.md §3](../references/loopcoder-v2.md#3-核心创新)）：
 - **CLP（Cross-Loop Position Shift）**：跨循环位置偏移打破串行依赖 → 多圈可并行
 - **G-SWA（Shared KV 的门控滑窗）**：首循环 KV 共享 → 显存不随圈数增长
 
-**移植到 HRM 的可行性**：高。HRM-Text 与 PLT 都是 Transformer block 的循环应用，区别只在：
-- HRM 有 H/L 两个独立 block（层次化）
-- PLT 是单一共享 block（扁平）
-
-PLT 的 CLP 可以扩展为：**H 循环内并行 L 循环**（即同一 H cycle 内的 3 个 L 步骤可并行）。
-
-### 4.2 移植方案：H-L Parallel Loop Transformer (HLT-PLT)
+**移植到 HRM**：HLT-PLT（H 串行包 L 并行）
 
 ```python
 # 原 HRM-Text（H 串行包 L 串行）
@@ -145,42 +150,87 @@ for h in range(H_cycles):     # 2
 
 # HLT-PLT（H 串行 + L 并行）
 for h in range(H_cycles):                # 2（仍串行）
-    # L 循环并行执行（CLP 偏移打破串行依赖）
     z_L = parallel_L_chain(z_L + z_H)   # 3 步 L 在一个 forward 内并行
     z_H = H_module(z_H + z_L)
 ```
 
-**关键约束**：H 循环必须串行（H 是慢速全局），L 循环可并行（L 是快速局部）。
+**延迟节省**：8 步变 3 步，**延迟降低 62%**。
 
-### 4.3 延迟节省
+**适用场景**：单轨迹推理 K=4-8 时。
 
-| 配置 | H cycles | L cycles | 总循环步 | 串行延迟 | 并行延迟 |
-|------|:---:|:---:|:---:|:---:|:---:|
-| 原 HRM-Text | 2 | 3 | 8 | 8x | 8x |
-| HLT-PLT | 2 | 3（并行）| 8 | **3x**（2 H + 1 L forward）| 3x |
-| 节省 | — | — | — | **62%** | **62%** |
+### 4.3 Radix Cache 多路径并行（你提出的方案）
 
-**关键数字**：H cycles 2 步 + L 并行 1 步 = 总 3 次前向。原 8 步变 3 步，**延迟降低 62%**。
+**核心思想**：GRAM 多轨迹在 latent tree search 中并行采样，共享前缀通过 Radix Tree 缓存。
 
-### 4.4 工程约束
+```python
+def radix_cache_gram(x, n_paths=4, K=2):
+    base_h = prefill(x)  # 共享前缀
+    radix_cache = RadixTree(base_h)
+    
+    # N 条路径并行采样
+    paths = []
+    for i in range(n_paths):
+        eps_i = sample_eps()
+        h_i = base_h.clone()
+        for k in range(K):
+            h_i = hrm_block(h_i, x, eps_i, cache=radix_cache)
+        paths.append(h_i)
+    
+    return aggregate(paths)  # 综合 N 条路径
+```
 
-| 约束 | 状态 |
-|------|------|
-| **L 模块需支持并行 chain** | 需修改 L_module 添加 CLP 偏移 |
-| **KV cache 需支持 G-SWA** | 需修改 KV cache 管理 |
-| **精度损失** | ⚠️ 需小规模验证（CLP 引入位置偏移税） |
-| **实现复杂度** | 🟡 中等（参考 PLT 实现）|
+**延迟**：N=4 路径 × K=2 = 8 步推理，延迟 ≈ **1 次 K=8 forward**（路径并行）。
 
-### 4.5 实施优先级
+**适用场景**：多假设决策（路口左/右转）。
 
-**v1.0**：不实施（K=2 默认，延迟已可接受）。
+### 4.4 层次化推理（你提出的另一个方案）
 
-**v1.5**：条件性实施——**仅在以下情况启动**：
-- GRAM 多轨迹扩展到 K=8 时
-- 端侧 K=8 时延仍超预算时
-- 共享感知主干的多模态融合需要更深推理时
+**核心思想**：主推理在关键节点暂停，派生子推理完成局部任务，再恢复。
 
-**风险**：CLP 位置偏移税可能导致 L 循环精度损失。**先用 STARS 谱正则化作为 Plan B**（详见 [stars.md](../references/stars.md)）。
+```python
+def hierarchical_reasoning(x, K_main=2, K_sub=1):
+    h = prefill(x)
+    
+    # 主推理第一阶段
+    h = hrm_main_block(h, x)
+    
+    # 触发子推理（并行）
+    sub_results = parallel([
+        sub_reasoning_1(h, K=K_sub),
+        sub_reasoning_2(h, K=K_sub),
+        sub_reasoning_3(h, K=K_sub),
+    ])
+    
+    # 主推理第二阶段（融合子结果）
+    h = hrm_main_block(h, x, sub_context=sub_results)
+    return h
+```
+
+**延迟**：K_main + max(K_sub) = 2 + 1 = 3 次 forward。
+
+**适用场景**：可分解推理（数学先计算再验证）。
+
+### 4.5 三方案对比
+
+| 场景 | PLT/HLT-PLT | Radix Cache 多路径 | 层次化 |
+|------|:---:|:---:|:---:|
+| **单轨迹推理 K=4-8** | ✅ 端侧化 | — | — |
+| **多假设决策** | — | ✅ 端侧化 | — |
+| **可分解推理** | — | — | ✅ 主 + 子并行 |
+| **延迟节省** | 62% | N 倍 | 2-3 倍 |
+
+**结论**：**没有单一方案压倒性最优**——按场景选，Logos 64M v2.0 验证哪种组合最优。
+
+### 4.6 实施优先级
+
+**v1.0 (HRM-Text 集成)**：仅 K=2 串行，延迟已可接受。
+
+**v1.5**：条件性实施并行化——仅在以下情况启动：
+- GRAM 多轨迹扩展到 K=8 时 → 用 Radix Cache
+- 端侧 K=8 时延仍超预算时 → 用 HLT-PLT
+- 可分解推理任务出现时 → 用层次化
+
+**风险**：CLP 位置偏移税可能导致 L 循环精度损失。**STARS 谱正则化作为 Plan B**（详见 [stars.md](../references/stars.md)）。
 
 ---
 
