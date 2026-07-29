@@ -1,28 +1,31 @@
 # Logos / 逻各斯 主线架构白皮书
 
-> **一句话定位**：LatentMind 主线架构 Logos——以"分层循环 + 多轨迹采样 + 端侧推理"三件套，构建 **<1B 参数、ChipForge APU 部署的物理 AI 认知核**，专攻**推理 + 决策**任务。
+> **一句话定位**：LatentMind 主线架构 Logos——以"分层循环 + 多轨迹推理 + 端侧部署"三件套，构建 **<1B 参数、ChipForge APU 部署的物理 AI 认知核**，专攻**推理 + 决策**任务。**全新架构，从零训练**。
 > **性质**：Logos 主线架构的全要素合并稿，涵盖核心哲学、架构蓝图、双轨分工、训练策略、端侧集成、风险降级与演进路径
-> **最后更新**：2026-07-29
+> **最后更新**：2026-07-29（v1.4 重大更新：全新架构定位 + 移除 HRM-Text 集成假设）
 > **命名来源**：希腊哲学 Logos（λόγος）——赫拉克利特"万物运行的理性原则"，斯多葛学派"宇宙之理"，基督教神学"太初有道"。与 SADKO（俄罗斯民间传说，海洋奇迹的探索者）形成哲学抽象 vs 民间叙事的对仗。
 
 ---
 
 ## 0. Logos 与 SADKO 的关系
 
-LatentMind 项目采用**双轨制**：Logos（主线）+ SADKO（探索分支）。
+LatentMind 项目采用**双轨制**：Logos（主线）+ SADKO（探索分支）。**两条路线都是全新架构，从零训练**。
 
 | 维度 | **Logos 主线** | **SADKO 探索分支** |
 |------|--------------|------------------|
 | **定位** | 推理 + 决策 | 感知 + 记忆 + 知识 + 多模态 |
-| **backbone** | HRM-Text（1.15B 层次化循环）| AR-Native + Split-GQA + ELF |
-| **核心范式** | 循环 + 多轨迹采样 | 双向注意力 + Flow Matching + FSQ |
+| **backbone** | 分层双时间尺度循环（H/L 借鉴，独立设计） | AR-Native + Split-GQA + ELF（独立设计） |
+| **核心范式** | 循环 + 多轨迹推理 | 双向注意力 + Flow Matching + FSQ |
 | **数学偏置** | 序列 + 收敛 + 不确定性 | 空间 + 流形 + 离散锚点 |
+| **训练起点** | MiniMind3 64M Dense（作为基座参考） | MiniMind3 64M Dense（作为基座参考） |
+| **是否复用预训练权重** | **否**（从零训练） | **否**（从零训练） |
+| **架构灵感参考** | HRM-Text / GRAM / PLT / Split-GQA | Flow Matching / VQ-VAE / ELMo |
 | **目标硬件** | ChipForge APU 端侧 | 服务器训练 + 端侧 KV 缓存 |
 | **哲学隐喻** | 大脑皮层（理性思考）| 海马体（流形记忆）|
 
 **详细分工论证**：见 [sadko-multimodal-native.md](./sadko-multimodal-native.md)。
 
-**融合接口**：SADKO 训练后冻结的 ELF Memory KV 通过 **Cross-Attention** 喂给 Logos 主线 HRM 的中间层。
+**融合接口**：SADKO 训练后冻结的 ELF Memory KV 通过 **Cross-Attention** 喂给 Logos 主线 H 模块的中间层（"HRM 是大脑皮层，ELF 是海马体"）。
 
 ---
 
@@ -35,21 +38,23 @@ Logos 确立三大底层哲学基石：
 **命题**：物理 AI 的认知推理，本质上是在潜空间内**多次循环迭代同一函数**，逐步逼近"理性答案"。
 
 **技术映射**：
-- HRM-Text 的双时间尺度循环（H 慢 + L 快，2H×3L=8 步）= 物理参数 1B，但**等效计算深度** K 倍
+- 借鉴 HRM-Text 的双时间尺度循环思想（H 慢 + L 快），但**独立设计**
 - 每次循环 $z^{(k+1)} = f(z^{(k)}, x)$ 都对前一状态做"反思-精炼"
 - 收敛到不动点 = 推理完成
+- K 是超参数（不是架构决策），由 64M 验证决定
 
 **第一性原理支撑**：
 - 数学不动点定理（Banach）：压缩映射必收敛到唯一不动点
-- 哲学 Logos（赫拉克利特）：理性（Logos）是万物运行的恒定原则——而 HRM 的循环正是寻找"理性答案"的数学过程
+- LoopCoder-v2 验证（K=2 > K=1 +50%）证明循环架构方向正确
+- 哲学 Logos（赫拉克利特）：理性（Logos）是万物运行的恒定原则——循环正是寻找"理性答案"的数学过程
 
 ### 1.2 多轨迹即决策（Multi-Trajectory is Decision）
 
 **命题**：在多假设场景中（路口左转/右转、规划路径 A/B/C），单次确定性推理不够，**必须采样多条潜空间轨迹并综合**。
 
 **技术映射**：
-- GRAM 的随机潜轨迹（Stochastic Latent Trajectories）= 在 K 步循环中注入 ε ~ N(μ, σ²I)
-- 每条轨迹是一个潜在决策，综合 K 条轨迹的概率分布得到最终决策
+- 借鉴 GRAM 的随机潜轨迹思想（Stochastic Latent Trajectories）——**仅作架构参考，不集成其训练流程**
+- 我们的实现：Per-Token 早退 + 多路径并行（Radix Cache 风格）
 - 测试时 scaling：递归深度 + 并行轨迹数 = 推理计算预算
 
 **第一性原理支撑**：
@@ -66,9 +71,10 @@ Logos 确立三大底层哲学基石：
 |------|------|------|
 | **参数总量** | <1B | ChipForge APU 内存预算 |
 | **激活参数** | <1B | FP16 推理显存 < 2 GiB |
-| **循环深度 K** | **≤ 2**（默认）| K=2 单 token ≤ 100ms；K=8 超 400ms 不可接受 |
+| **循环深度 K** | **超参数**（由 64M 验证决定，不是架构选择）| K 是具体数值不重要 |
 | **首 token 延迟** | < 200ms | 自动驾驶场景硬约束 |
 | **KV 缓存** | 端侧 INT8 | 减少带宽 |
+| **并行化策略** | PLT / Radix Cache / 层次化 | 突破 K 端侧限制 |
 
 **关键论证**：详见 [logos-k-strategy.md](./logos-k-strategy.md)。
 
@@ -76,19 +82,19 @@ Logos 确立三大底层哲学基石：
 
 ## 2. 架构蓝图与核心组件（Architecture Blueprint）
 
-Logos v1.5 完整架构：
+Logos v1.5 完整架构（**全新架构，从零训练**）：
 
 ```
 图像 / 文本 / 知识图谱
         ↓
-原生统一感知层（3 层 CNN，~150M）
+原生统一感知层（3 层 CNN，~150M） ← 从零训练
         ↓
-分层递归潜空间引擎（~750M）—— HRM-Text
-        ├── H 慢速（全局逻辑、长程因果）
-        ├── L 快速（局部特征、细粒度对齐）
-        └── 多轨迹扰动（GRAM 注入到 H 模块）
+Logos 分层递归潜空间引擎（~750M） ← 从零训练
+        ├── H/L 双时间尺度循环（数学同构于 Split-GQA）
+        ├── Per-Token 早退（动态 K 调度）
+        └── 多轨迹并行推理（Radix Cache 风格）
         ↓
-双流解码层（~100M）
+双流解码层（~100M） ← 从零训练
         ├── 语言解释头（PrefixLM）
         └── 生成式语义头（轻量 DiT / Flow Matching）
         ↓
@@ -97,94 +103,65 @@ Logos v1.5 完整架构：
 
 ### 2.1 模块 A：原生统一感知层（~150M）
 
-**设计**：借鉴商汤 SenseNova U1 的 NEO-Unify 思想，极轻量 3 层 CNN 将图像 Patch 和文本 Token 映射到同一潜空间。
+**设计**：借鉴商汤 SenseNova U1 的 NEO-Unify 思想，极轻量 3 层 CNN 将图像 Patch 和文本 Token 映射到同一潜空间表示中。**从零训练**。
 
-**关键特性**：
+**特点**：
 - 无独立视觉编码器（VE-free）
 - 像素和文字从一开始就在同一空间"对话"
-- 消除跨模态翻译的信息损耗
+- 消除了跨模态翻译的信息损耗
 
 **与 SADKO 的差异**：Logos 的感知层是**单向前馈**（简单 3 层 CNN），不做循环；SADKO 的 ELF 是**双向 + FM** 流形压缩——这是"快速感知 vs 流形记忆"的分工。
 
-### 2.2 模块 B：分层递归潜空间引擎（~750M）
+### 2.2 模块 B：Logos 分层递归潜空间引擎（~750M）
 
-**设计**：HRM-Text（Hierarchical Reasoning Model）+ GRAM 多轨迹扰动。
+**设计**：Logos 全新架构，**从零训练**。借鉴 HRM-Text 的双时间尺度循环思想 + SADKO Split-GQA 的异构 RoPE 思路。
 
-**HRM 双时间尺度结构**（详见 [hrm-text.md §3.2](../references/hrm-text.md#32-hrm-循环结构)）：
+**H/L 双时间尺度结构**：
 
 ```python
-# HF Transformers 模型类原文
+# Logos H/L 双时间尺度循环（K 是超参数）
 z_H = embed(input_ids) * embedding_scale
 z_L = z_L_init.expand_as(z_H)
-for _ in range(H_cycles):     # 2
-    for _ in range(L_cycles): # 3
+for h in range(H_cycles):     # 默认 2
+    for l in range(L_cycles): # 默认 3
         z_L = L_module(z_L + z_H)
     z_H = H_module(z_H + z_L)
 return z_H
 ```
 
-**借鉴 SADKO Split-GQA + 异构 RoPE**（2026-07-29 增补）：HRM 与 SADKO 在数学上**独立发现同一洞察**——"双时间尺度"。
+**双时间尺度的数学同构**：
 
-| SADKO Split-GQA | HRM H/L | 数学本质 |
-|----------------|---------|---------|
-| Static KV heads (base=500k) | H module (慢速) | 长程信息 |
-| Dynamic KV heads (base=10k) | L module (快速) | 短程信息 |
+| 维度 | SADKO Split-GQA | Logos H/L | 数学本质 |
+|------|----------------|----------|---------|
+| 长程/慢速 | Static KV heads (base=500k) | H module | 长程信息保留 |
+| 短程/快速 | Dynamic KV heads (base=10k) | L module | 短程信息处理 |
+| 双时间尺度 | head 维度分裂 | block 维度分裂 | 同一洞察 |
 
-**关键整合**：Logos H/L block 内部采用 Split-GQA 风格——H block 用更多 Static heads（长程），L block 用更多 Dynamic heads（短程）。**双时间尺度在 block 维度和 head 维度同时存在**。详细对比见 [logos-v1-architecture.md §3](./logos-v1-architecture.md#3-三种双时间尺度实现方案)。
-
-**双时间尺度作用**：
-- **H 慢速**（2 cycles）：全局逻辑、长程因果、"生成式语义"的宏观布局
-- **L 快速**（每 H 周期 3 cycles）：局部高频特征、边缘、小目标和细粒度对齐
-
-**机器潜空间语言**：输入信号进入后，H/L 循环 K 次（如默认 8 次），模型在潜空间内"默默思考"。
+**关键整合**（v1.0 64M 验证）：H/L block 内部采用 Split-GQA 风格——H block 用更多 Static heads（长程），L block 用更多 Dynamic heads（短程）。**双时间尺度在 block 维度和 head 维度同时存在**。
 
 **稳定性保障**：
-- **MagicNorm**（前向 PostNorm + 反向 PreNorm）——深层梯度稳定性
-- **Warmup BPTT**（K=2 → K=5）—— 预热深度信用分配
-- **PLT 并行化移植**（可选，详见 [logos-k-strategy.md §4](./logos-k-strategy.md)）—— K=8 推理延迟压平到单次推理延迟
+- MagicNorm 思想（前向 PostNorm + 反向 PreNorm）
+- Per-Token 早退（动态 K 调度）
+- 异构 RoPE（base=10k vs 500k）
 
-### 2.3 模块 B+：GRAM 多轨迹扰动
+### 2.3 模块 B+：多轨迹并行推理（端侧化关键）
 
-**设计**：GRAM 变分随机化扩展 HRM 风格循环（详见 [gram.md](../references/gram.md)）。
+**设计**：借鉴 GRAM 随机潜轨迹思想，**但完全独立实现**——不用 GRAM 的训练流程。
 
-**集成点**：在 H 模块 residual 后加可学习 μ_θ, σ_θ；注入 ε ~ N(μ, σ²I)；变分 ELBO 训练。
+**核心机制**：
+- **Per-Token 早退**：借鉴 [Per-Token Convergence 论文](../references/per-token-convergence.md)（90% token 6 步收敛）
+- **Radix Cache 多路径并行**：借鉴 [PLT 架构](../references/loopcoder-v2.md) 的并行循环思想，扩展为多路径版本
+- **层次化推理**：主 + 子并行（适合可分解推理任务）
 
-**作用机制**：
-- **训练时**：强制 H 模块适应"噪声输入"，提升对多假设的覆盖
-- **推理时**：采样 K 条潜轨迹，每条得到一个潜在决策；综合 K 条概率分布输出最安全决策
-
-**测试时 scaling**：
-- 简单任务：K=1（不注入噪声）
-- 中等任务：K=2 + ε ~ N(0, σ²I)，σ 较小
-- 复杂决策：K=4-8 + ε 较大，多轨迹综合
-
-**端侧化：Radix Cache 多路径并行**（2026-07-29 增补）
-
-GRAM 多轨迹在端侧 K=4-8 串行 = 4-8 倍延迟。**Radix Cache 多路径并行**让 N 条轨迹在同一 forward 内并行：
-
-```python
-# 简化版 Radix Cache + GRAM 多路径
-def radix_cache_gram(x, n_paths=4, K=2):
-    base_h = prefill(x)  # 共享前缀
-    radix_cache = RadixTree(base_h)
-    
-    # N 条轨迹并行采样
-    paths = []
-    for i in range(n_paths):
-        eps_i = sample_eps()  # 每条轨迹独立噪声
-        h_i = base_h.clone()
-        for k in range(K):
-            h_i = hrm_block(h_i, x, eps_i, cache=radix_cache)
-        paths.append(h_i)
-    
-    return aggregate(paths)  # 综合 N 条轨迹
-```
-
-**延迟**：N=4 路径 × K=2 = 8 步推理，延迟 ≈ **1 次 K=8 forward**（路径并行）。端侧预算内可行。详细见 [logos-v3-architecture.md](./logos-v3-architecture.md)。
+**与原 GRAM 思想的差异**：
+- ❌ 不集成 GRAM 的变分 ELBO 训练流程
+- ❌ 不使用 GRAM 的 μ, σ 可学习参数
+- ✅ 借鉴"多轨迹综合决策"的**思想**，独立实现端侧友好版本
+- ✅ 用 Per-Token 早退 + 多路径并行实现"测试时 scaling"
 
 ### 2.4 模块 C：双流解码层（~100M）
 
-**设计**：潜空间推理完成后，最终 Meta-representation（元表征）送入两个轻量解码头。
+**设计**：潜空间推理完成后，最终 Meta-representation（元表征）送入两个轻量解码头。**从零训练**。
 
 | 解码头 | 输出 | 实现 |
 |-------|------|------|
@@ -192,7 +169,7 @@ def radix_cache_gram(x, n_paths=4, K=2):
 | **生成式语义头** | 语义图 / BEV / 控制轨迹 | 轻量 DiT 或 Flow Matching（条件生成）|
 
 **关键设计**：
-- PrefixLM 在 HRM-Text 上已验证（+5.4 MMLU，+1.3 MATH，详见 [hrm-text.md §3.1](../references/hrm-text.md#31-三大设计论文-table-3-消融已证实)）
+- PrefixLM 借鉴 HRM-Text（+5.4 MMLU，+1.3 MATH），但**不依赖 HRM-Text 权重**
 - 双流解码使 Logos 能同时输出"语言解释"和"动作/语义图"——物理 AI 必需
 
 ---
@@ -214,25 +191,25 @@ Logos 与 SADKO 的关系：**互补 + 融合**，非竞争。
 
 详细论证见 [sadko-multimodal-native.md §1](./sadko-multimodal-native.md#1-第一性原理连续-vs-离散的数学偏置)。
 
-### 3.2 融合接口
+### 3.2 融合接口（远期）
 
 ```
-┌───────────────── Logos 主线（HRM-Text + GRAM）───────────────┐
-│  推理 + 决策（循环/多轨迹的天然优势域）                         │
-│  接收：感知主干输出 + SADKO ELF Memory KV (via Cross-Attention)│
-│  输出：动作 / 决策 / 结构化解释                                │
+┌───────────────── Logos 主线（H/L 分层循环）───────────────┐
+│  推理 + 决策（H/L 双时间尺度的天然优势域）                       │
+│  接收：感知主干输出 + SADKO ELF Memory KV (via Cross-Attention) │
+│  输出：动作 / 决策 / 结构化解释                                  │
 └─────────────────────────┬────────────────────────────────────┘
                           │ Cross-Attention 融合
                           ↓
 ┌───────────────── 共享感知主干（M0）───────────────────────────┐
-│  原生统一感知：3 层 CNN + 模态扩展                              │
-│  由 SADKO 训练后冻结，Logos 只读取                              │
+│  原生统一感知：3 层 CNN + 模态扩展                                  │
+│  由 SADKO 训练后冻结，Logos 只读取                                  │
 └─────────────────────────┬────────────────────────────────────┘
                           │ 共享潜空间接口
                           ↓
 ┌───────────────── SADKO 探索分支 ─────────────────────────────┐
-│  感知 + 记忆 + 知识 + 多模态（双向/FM/FSQ 的天然优势域）        │
-│  输出：共享感知主干 + ELF Memory KV Pool                       │
+│  感知 + 记忆 + 知识 + 多模态（双向/FM/FSQ 的天然优势域）             │
+│  输出：共享感知主干 + ELF Memory KV Pool                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -243,37 +220,34 @@ Logos 与 SADKO 的关系：**互补 + 融合**，非竞争。
 **当前状态（2026-07-29）**：两条路线**独立并行**，尚未融合。
 
 **融合启动条件**：
-1. Logos 1B 端侧 Demo 跑通（+4-5 月）
+1. Logos 1B 训练完成（+6 月）
 2. SADKO 64M 四大机制实验产出《机制清单》（+2-3 月）
-3. 双轨分工 §7.5 决策时间表确认（+4 月）
-
-**详细协同**见 [logos-roadmap.md §4](./logos-roadmap.md#4-与-sadko-协同)。
+3. 双轨分工 §7.5 决策时间表确认（+3 月）
 
 ---
 
 ## 4. 训练策略（Training Strategy）
 
-Logos 采用**三阶段渐进训练**：
+Logos 采用**三阶段渐进训练**——**完全从零训练**，不依赖任何预训练权重。
 
-### 阶段一：潜空间自监督预热
+### 阶段一：潜空间自监督预热（64M）
 
-- **目标**：让模型学会"机器潜空间语言"
-- **方法**：输入多模态数据，让模型在内部循环 K 次，然后要求它重建被掩码的图像 Patch 和文本 Token
-- **关键**：迫使潜空间引擎学会在内部存储和推演信息
-- **基座**：复用 HRM-Text 40B tokens 预训练权重（详见 [hrm-text.md §5](../references/hrm-text.md#5-训练配方)）
+- **目标**：让新架构学会"机器潜空间语言"
+- **方法**：基于 MiniMind3 64M Dense 基座，改造为 Logos H/L 架构，**完全重新训练**
+- **关键**：迫使新潜空间引擎学会在内部存储和推演信息
+- **数据**：4B tokens（与 MiniMind3 原始 Pretrain 数据对齐，作为起点）
 
 ### 阶段二：仅回答目标 + 双任务对齐
 
-- **目标**：让潜空间推理的结果能够准确映射到自然语言和语义图
-- **方法**：只对最终输出的自然语言和生成的语义图计算损失，不对内部循环的中间潜空间状态施加额外约束
+- **目标**：让新架构的潜空间推理能映射到自然语言和语义图
+- **方法**：只对最终输出计算损失
 - **关键**：让模型自由探索最优的内部潜空间计算路径
 
-### 阶段三：多轨迹概率推理（GRAM 注入）
+### 阶段三：多任务对齐（规模扩展）
 
-- **目标**：解决多模态不确定性（如路口可能左转也可能右转）
-- **方法**：在 H 模块 residual 后注入 ε ~ N(μ, σ²I)，变分 ELBO 训练
-- **关键**：综合多条轨迹的概率分布，生成最安全的语义图和解释
-- **资源**：GRAM 论文只验证到 10-11M，**1B 验证必需**（详见 [gram.md](../references/gram.md)）
+- **目标**：让多模态输出与决策任务对齐
+- **方法**：在多任务数据集上微调
+- **关键**：保留 Logos 推理的涌现能力
 
 ---
 
@@ -288,7 +262,7 @@ ChipForge APU
 ├── Tensor Core 矩阵加速
 └── Logos 认知核（软件栈最顶层）
     ├── 原生感知层（CNN，INT8 推理）
-    ├── 分层递归潜空间引擎（HRM-Text，FP16 推理）
+    ├── 分层递归潜空间引擎（Logos，FP16 推理）
     └── 双流解码器（INT8 推理）
 ```
 
@@ -296,20 +270,20 @@ ChipForge APU
 
 | 组件 | 精度 | 理由 |
 |------|------|------|
-| **HRM-Text backbone** | FP16（**不用 Q4**）| Q4 会破坏 MagicNorm 稳定性 |
+| **Logos backbone** | FP16（**不用 Q4**）| Q4 会破坏 MagicNorm 稳定性 |
 | **感知层（3 层 CNN）** | INT8 / Q4 | 视觉容忍量化损失 |
 | **双流解码头** | INT8 | 输出层容忍量化 |
 | **KV Cache** | INT8（端侧）| 端侧内存约束 |
 
-### 5.3 端侧延迟预算
+### 5.3 端侧延迟约束
 
-| 任务 | 目标延迟 | K=2 单 token | K=8 单 token |
-|------|---------|-------------|--------------|
-| 自动驾驶感知 | <50ms | ✅ 50ms | ❌ 200ms |
+| 任务 | 目标延迟 | 单 token K=2 | 单 token K=8（理论上）|
+|------|---------|-------------|------------------|
+| 自动驾驶感知 | <50ms | ✅ 50ms | ❌ 400ms |
 | 实时对话 | <100ms | ✅ 100ms | ❌ 400ms |
 | 离线规划 | <500ms | ✅ | ✅ |
 
-**关键约束**：**K ≤ 2 是硬预算**。详细 K 策略见 [logos-k-strategy.md](./logos-k-strategy.md)。
+**关键约束**：K>4 串行循环在端侧实际价值≈0（K=8 不可用）。需要用 PLT / Radix Cache / 层次化等并行化策略突破 K 限制（详见 [logos-k-strategy.md](./logos-k-strategy.md)）。**具体 K 值由 64M 验证决定，不是预先固定**。
 
 ---
 
@@ -319,73 +293,75 @@ ChipForge APU
 
 | 潜在风险 | 概率 | 影响 | 降级预案（Plan B）|
 |---------|:---:|:---:|---------|
-| **K=8 端侧时延超预算** | 🔴 高 | 高 | 启用 K=2 + per-token early exit（详见 [logos-k-strategy.md §3](./logos-k-strategy.md#3-k2-默认策略)）|
-| **K=8 出现 gain-then-collapse** | 🟠 中 | 高 | 启用 STARS Jacobian 谱半径正则化（详见 [stars.md](../references/stars.md)）|
-| **GRAM 1B 扩展失败** | 🟠 中 | 高 | 缩小到 K=4 轨迹 + 简化变分目标 |
+| **64M 训练崩溃** | 🔴 高 | 高 | 启用 MagicNorm 思想 + 调整初始化 |
+| **新架构 K 值过大** | 🟠 中 | 高 | 用 PLT 并行化降到 1x 延迟（详见 §6.2）|
+| **多轨迹决策质量差** | 🟠 中 | 中 | 退回 Per-Token 早退单一路径 |
 | **感知层多模态融合失败** | 🟠 中 | 中 | 切换到 SADKO ELF 双向感知主干（融合接口）|
-| **感知层 3 层 CNN 容量不足** | 🟡 低 | 中 | 扩展到 5 层 CNN，或借用 SADKO 的双向层 |
 | **端侧 FP16 推理精度损失** | 🟡 低 | 中 | 局部 INT8 + 关键层 FP16 混合精度 |
-| **MagicNorm 在 APU 上不稳定** | 🟡 低 | 高 | 替换为 Pre-Norm + RMSNorm 传统方案 |
+| **64M 收敛失败** | 🟡 低 | 高 | 退回标准 Transformer 基线验证 MiniMind3 训练流程 |
 
 ### 6.2 Plan B 触发决策树
 
 ```
-K=8 集成时延 > 200ms（单 token）
-    ├─ YES → 启用 K=2 + per-token early exit（详细 §3）
-    └─ NO → 维持 K=8
-            │
-            ↓
-K=8 训练出现 gain-then-collapse
-    ├─ YES → 启用 STARS 谱半径正则化
-    └─ NO → 维持 K=8 + MagicNorm
-            │
-            ↓
-GRAM 1B 变分训练不稳定
-    ├─ YES → 退回 K=2 + ε 简化版（不训练 μ, σ）
-    └─ NO → 维持 GRAM 多轨迹
-```
+Logos 64M 训练收敛？
+    ├─ YES → 进入 64M 验证 + 出《机制清单》
+    └─ NO  → 启用人 MagicNorm 思想 + 调整初始化
+            ├─ 收敛 → 继续
+            └─ 不收敛 → 退回标准 Transformer
 
-详细触发条件见 [logos-k-strategy.md §6 Plan B 触发条件](./logos-k-strategy.md#6-plan-b-触发条件)。
+K>4 在端侧不可用？
+    ├─ YES → 启用 PLT 并行化（HLT-PLT）
+    └─ NO  → 维持串行 K 循环
+
+多轨迹决策质量差？
+    ├─ YES → 退回 Per-Token 早退单一路径
+    └─ NO  → 维持多轨迹并行
+```
 
 ---
 
 ## 7. 演进路径（Evolution Path）
 
-Logos 从 64M 验证到 1.5B 完整方案的演进：
+Logos 从 64M 起点到 1.5B 完整方案的演进（**每级独立训练，从零开始**）：
 
-### 7.1 阶段零：64M 快速消融（MiniMind3，可选）
+### 7.1 阶段一：64M 起点（+0 至 +2 月）
 
-- **目标**：验证 HRM 风格循环在标准 Transformer 上的 K-精度曲线
-- **范围**：仅在 K=8 集成失败时启动（Plan B，详见 [RDD-0001](../rfcs/RDD-0001-k-sweep-experiment.md)）
-- **不阻塞主线**
+**目标**：在 MiniMind3 64M Dense 基座上，**完全重新训练**为 Logos H/L 架构，验证核心机制。
 
-### 7.2 阶段一：1B 端侧 Demo（v1.0，+1 至 +5 月）
+**关键产出**：
+- 《64M 机制清单》——比"最佳性能"更重要
+- 决定 300M 的具体架构细节
+- 推荐 K 值范围（不是固定值）
 
-- **目标**：物理 AI 端侧推理 demo
-- **关键组件**：
-  - HRM-Text 1B backbone（直接用 HF 权重）
-  - 3 层 CNN 感知层（冻结 backbone 微调感知层）
-  - 双流解码（PrefixLM + 轻量 DiT）
-- **不集成 GRAM**（v1.0 不做多轨迹）
-- **端侧验证**：ChipForge APU INT8 部署
+**详细计划**：[logos-64m-validation-plan.md](./logos-64m-validation-plan.md)
 
-### 7.3 阶段二：1B 完整推理（v1.5，+7 至 +10 月）
+### 7.2 阶段二：300M 规模验证（+3 至 +4 月）
 
-- **目标**：物理 AI 端侧推理 + 决策完整方案
-- **新增组件**：
-  - GRAM 多轨迹扰动（变分注入）
-  - PLT 并行化移植（K=8 推理延迟压平）
-  - per-token early exit（动态 K 调度）
-- **SADKO 融合接口**（如 SADKO 64M 验证通过）：ELF Memory KV → HRM Cross-Attention
+**目标**：从 64M 扩展到 300M，重新训练（不依赖 64M 权重作为预训练，仅借鉴结构）。
 
-### 7.4 阶段三：1.5B 完整多模态（v2.0，+12 月）
+**新增能力**：
+- 更多循环次数（K 适当增加）
+- 更多训练 tokens（~30B）
+- 端侧量化验证（INT8）
+- 双流解码层完整训练
 
-- **目标**：物理 AI + 多模态记忆核（双核）
-- **新增**：
-  - Logos 1B（推理核，FP16）
-  - SADKO 1.5B（多模态记忆核，INT8 KV 缓存）
-  - 完整 Cross-Attention 融合接口
-- **硬件**：ChipForge APU + 服务器训练
+### 7.3 阶段三：1B 端侧推理核（+6 至 +9 月）
+
+**目标**：物理 AI 端侧推理芯片上的 Logos 1B。**从零训练**，不依赖 300M 权重作为预训练（仅借鉴架构与超参）。
+
+**关键能力**：
+- ChipForge APU 端侧部署
+- INT8 量化（感知层 + 解码头）
+- 与 SADKO 双流融合（决策 + 记忆）
+
+### 7.4 阶段四：1.5B 完整融合（+12 月）
+
+**目标**：Logos 1B（推理核）+ SADKO 1.5B（多模态记忆核）完整融合。
+
+**硬件**：
+- Logos 1B：ChipForge APU 端侧（FP16）
+- SADKO 1.5B：服务器训练 + 端侧 KV 缓存（INT8）
+- Cross-Attention 融合接口
 
 **详细路线图**：[logos-roadmap.md](./logos-roadmap.md)
 
@@ -393,17 +369,14 @@ Logos 从 64M 验证到 1.5B 完整方案的演进：
 
 ## 8. 关键引用块（Key Quotes）
 
-> HRM-Text 原文：
-> "We present HRM-Text, a 1B-parameter hierarchical recurrent model trained from scratch using only 40B unique tokens and a budget of $1,500, achieving 60.7% MMLU, 81.9% ARC-C, 82.2% DROP, 84.5% GSM8K, and 56.2% MATH."
+> **Logos 核心战略（2026-07-29 v1.4）**：
+> "Logos 是全新架构，从零训练。HRM-Text / GRAM 是**架构灵感参考**，不集成其权重。64M 是起点，逐步扩展到 300M / 1B / 1.5B。K 值是超参数，由 64M 验证决定，不是架构选择。"
 
-> GRAM 原文：
-> "Stochastic latent trajectories for multi-hypothesis reasoning, with amortized variational inference."
+> LoopCoder-v2 关键支撑：
+> "On SWE-bench Verified, our 7B baseline achieves 43.0%. With only one extra loop, performance jumps to 64.4%. This validates that cyclic architecture is the right direction."
 
-> LoopCoder-v2 原文（关键支撑）：
-> "On SWE-bench Verified, our 7B baseline achieves 43.0%. With only one extra loop, performance jumps to 64.4% (+50%). This validates that cyclic architecture is the right direction, with diminishing returns at higher K."
-
-> Logos 哲学宣言（2026-07-29）：
-> "Logos = 循环即推理 + 多轨迹即决策 + 端侧即哲学。三件套构建物理 AI 的认知核——理性的数学化身，运行在每一台边缘设备上。"
+> 第一性原理双轨分工：
+> "循环/多轨迹偏置'序列+收敛+不确定性' → 推理+决策（Logos）；双向/FM/FSQ 偏置'空间+流形+离散锚点' → 感知+记忆+知识+多模态（SADKO）。"
 
 ---
 
@@ -412,18 +385,23 @@ Logos 从 64M 验证到 1.5B 完整方案的演进：
 | 文档 | 关系 |
 |------|------|
 | [docs/architecture.md](../architecture.md) | 高层项目概览（已存在），Logos 是其详细技术展开 |
-| [docs/references/hrm-text.md](../references/hrm-text.md) | HRM-Text 外部论文笔记（详见 §2.2）|
-| [docs/references/gram.md](../references/gram.md) | GRAM 外部论文笔记（详见 §2.3）|
-| [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | K 值策略的关键论文（详见 [logos-k-strategy.md](./logos-k-strategy.md)）|
-| [docs/references/huginn.md](../references/huginn.md) | 反例：循环可 K=50（支持 Logos K=2-8 假设）|
 | [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略与端侧可行性 |
 | [logos-roadmap.md](./logos-roadmap.md) | 详细路线图与决策时间表 |
-| [sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 探索分支白皮书（互补关系）|
-| [sadko-multimodal-native.md](./sadko-multimodal-native.md) | 双轨分工的第一性原理论证 |
+| [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) | 64M 起点验证计划 |
+| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比施工图 |
+| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略详细 |
+| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 多轨迹并行详细 |
+| [docs/references/hrm-text.md](../references/hrm-text.md) | HRM-Text 论文笔记（仅作架构参考，不集成权重）|
+| [docs/references/gram.md](../references/gram.md) | GRAM 论文笔记（仅作架构参考，不集成）|
+| [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | K 值策略关键论文 |
+| [docs/references/huginn.md](../references/huginn.md) | 反例：循环可 K=50 |
+| [docs/references/stars.md](../references/stars.md) | 崩溃修复方案 |
+| [docs/research/sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 探索分支白皮书（互补关系）|
+| [docs/research/sadko-multimodal-native.md](./sadko-multimodal-native.md) | 双轨分工的第一性原理论证 |
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 研究路线分工战略 |
 
 ---
 
-**最后更新**：2026-07-29
+**最后更新**：2026-07-29（v1.4 重大更新）
 **作者**：来自工作流（Logos 主线架构整理）
-**版本**：v1.0
+**版本**：v1.4

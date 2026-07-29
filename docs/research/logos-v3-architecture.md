@@ -1,101 +1,106 @@
-# Logos-Native-64M v3.0 架构设计：GRAM + Radix Cache 多路径决策
+# Logos-Native-64M v3.0 架构设计：多轨迹并行决策
 
-> **一句话定位**：在 v2.0 最优循环策略（K=2 + 早退 + Radix Cache 三件套应最优）上集成 GRAM 多轨迹——通过 Radix Cache 多路径并行让 N 条轨迹在端侧预算内完成，绘制"路径数 × 决策质量" scaling 曲线。
-> **上游文档**：[logos-64m-validation-plan.md §4](./logos-64m-validation-plan.md#4-v30gram--radix-cache-多路径决策)
-> **下游文档**：交付《Logos 64M 验证报告》→ 启动 HRM-Text 1B 集成
-> **最后更新**：2026-07-29
+> **一句话定位**：在 v2.0 推荐循环策略上集成多轨迹并行决策——借助 Radix Cache 多路径并行，让 N 条路径在端侧预算内完成（**不集成 GRAM**，独立实现）。
+> **上游文档**：[logos-64m-validation-plan.md §5](./logos-64m-validation-plan.md#5-v30多轨迹并行决策)
+> **下游文档**：交付《Logos 64M 验证报告》→ 启动 Logos 300M 训练
+> **最后更新**：2026-07-29（v1.2：去除 GR AM 集成，明确独立实现多轨迹）
 
 ---
 
-## 0. 核心命题
+## 0. 关键定位：不集成 GRAM
 
-**GRAM 多轨迹决策能否在端侧预算内完成？**
+> 📌 **2026-07-29 v1.2 重要澄清**：
+> - **不集成 GRAM 训练流程**（μ, σ 可学习 + ELBO loss）
+> - **独立实现多轨迹思想**：Per-Token 早退 + Radix Cache 多路径 + 层次化推理
+> - GRAM 仅作**架构灵感参考**，借鉴"多轨迹综合决策"的思想
+> - Logos 从零训练，不需要 GRAM 的变分训练基础设施
 
-**核心论证**：详见 [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-bgram-多轨迹扰动)（Radix Cache 多路径并行）。
+---
+
+## 1. 核心命题
+
+**多轨迹并行决策能否在端侧预算内完成？**
+
+**核心论证**：详见 [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-b多轨迹并行推理端侧化关键)（多轨迹并行推理）。
 
 **三种候选实现**：
 
 | 实验 | 配置 | 端侧可行性 |
 |------|------|----------|
-| **C.1 GRAM 单轨迹基线** | K=2 + ε 注入（v1.0 直接用）| ✅ 已可行 |
-| **C.2 GRAM + Radix Cache** | 4 路径并行 + 共享前缀 | ✅ 延迟 ≈ 1.5x K=2 |
-| **C.3 GRAM + 层次化** | 主推理 + 子推理并行 | ✅ 延迟 ≈ 2-3x K=2 |
+| **C.1 多轨迹并行基础** | K=2（v1.0 直接用）| ✅ 已可行 |
+| **C.2 多轨迹 + Radix Cache** | N 路径并行 + 共享前缀 | ✅ 延迟 ≈ 1.5x K=2 |
+| **C.3 端侧多路径 Demo** | 多种并行策略组合 | ✅ 覆盖所有场景 |
 
 ---
 
-## 1. 设计目标
+## 2. 设计目标
 
-**找到 Logos 端侧多假设决策的最优实现**——Radix Cache 多路径应优于层次化。
+**找到 Logos 端侧多假设决策的最优实现**——Radix Cache 多路径应优于单路径。
 
 **验收标准**：
 - C.2 Radix Cache 4 路径延迟 < 1.5x K=2
 - C.2 多路径决策质量比单轨迹提升 ≥ 5%
-- 测试时 scaling 曲线：N 路径单调增，找到饱和点
+- 测试时 scaling 曲线：N 路径 vs 精度的 Pareto
 
 ---
 
-## 2. GRAM 多轨迹基础
+## 3. 多轨迹并行的基础
 
-### 2.1 GRAM 变分注入
+### 3.1 多路径的思想（独立实现）
 
-**核心机制**：在 H module residual 后注入 ε ~ N(μ, σ²I)，变分 ELBO 训练。
+> 📌 **不集成 GRAM**：我们的多路径并行**完全独立实现**——不用变分 ELBO，不用 μ, σ 可学习。
 
-```python
-def gram_h_module(z_H):
-    """H module with GRAM ε injection"""
-    z_H_new = H_module(z_H)
-    
-    # GRAM 变分注入（训练时）
-    if self.training:
-        mu = self.mu_proj(z_H_new)        # 学习均值
-        sigma = self.sigma_proj(z_H_new)  # 学习方差
-        eps = torch.randn_like(z_H_new) * sigma + mu
-        z_H_new = z_H_new + eps
-    
-    return z_H_new
-```
-
-### 2.2 训练时变分 ELBO
+**核心机制**：
+- 每条路径是一个独立的推理轨迹
+- 路径间通过 **Per-Token 早退**和 **Radix Cache 共享前缀**实现端侧友好
+- 综合多条路径的输出（平均 / 投票 / 加权）
 
 ```python
-def gram_loss(z_H_pred, target_ids, mu, sigma):
-    """GRAM 变分损失"""
-    # 重建损失
-    ce_loss = cross_entropy(z_H_pred, target_ids)
-    
-    # KL 散度（约束 μ, σ）
-    kl_loss = -0.5 * torch.mean(1 + torch.log(sigma**2) - mu**2 - sigma**2)
-    
-    return ce_loss + 0.1 * kl_loss  # β-VAE 风格
-```
-
-### 2.3 推理时多轨迹
-
-```python
-def gram_inference(x, n_trajectories=4):
-    """GRAM 推理：采样多条轨迹并综合"""
+def multipath_reasoning(x, n_paths=4, K=2):
+    """多路径推理（独立实现，不集成 GRAM）"""
+    # Prefill 共享前缀
     base_h = prefill(x)
     
-    trajectories = []
-    for i in range(n_trajectories):
-        # 独立采样 ε（每条轨迹独立）
-        torch.manual_seed(i)  # 或保留随机性
-        h_i = gram_h_module_chain(base_h)  # K 步推理
-        trajectories.append(h_i)
+    # N 条独立路径（每条路径独立采样）
+    paths = []
+    for i in range(n_paths):
+        h_i = base_h.clone()
+        for k in range(K):
+            # 每条路径独立推理（无 ε 注入，无变分训练）
+            h_i = hrm_block(h_i, x)
+        paths.append(h_i)
     
-    # 综合 N 条轨迹
-    return aggregate(trajectories)  # 平均 / 投票 / 加权
+    # 综合 N 条路径
+    return aggregate(paths)  # 平均 / 投票 / 加权
 ```
+
+### 3.2 与 GRAM 思想的对比
+
+| 维度 | GRAM 论文 | Logos 多路径（独立）|
+|------|---------|----------|
+| **多路径生成** | μ, σ 可学习 + ε ~ N(μ, σ²I) | 直接多次推理，无随机注入 |
+| **变分训练** | ELBO loss + KL 散度 | 不使用 ELBO，直接回归目标 |
+| **依赖训练基础设施** | 需要变分训练 | 不需要，标准 CE loss |
+| **从零训练** | ✅ | ✅（更简单）|
+| **是否集成 GRAM** | — | ❌ 仅作架构参考 |
+
+**关键差异**：Logos 多路径**不依赖变分训练**，可以直接复用 Logos H/L 标准训练的推理流程。**这是从零架构的严肃承诺**。
 
 ---
 
-## 3. Radix Cache 多路径集成（C.2）
+## 4. Radix Cache 多路径集成（C.2）
 
-### 3.1 完整架构
+### 4.1 完整架构
 
 ```python
-class RadixCacheGRAM(nn.Module):
-    """Radix Cache + GRAM 多路径并行"""
+class RadixCache:
+    """Radix Tree 节点（共享前缀缓存）"""
+    def __init__(self, hidden_state=None):
+        self.hidden_state = hidden_state
+        self.children = {}  # {prefix_hash: RadixTreeNode}
+
+class RadixCacheMultipath(nn.Module):
+    """Radix Cache 多路径并行"""
     def __init__(self, base_model, n_paths=4, K=2):
         super().__init__()
         self.base_model = base_model  # v1.0 A.3 混合风格
@@ -107,8 +112,8 @@ class RadixCacheGRAM(nn.Module):
         base_h = self.base_model.embed(input_ids)
         radix_cache = RadixCache(base_h)
         
-        # N 条轨迹并行采样
-        trajectories = []
+        # N 条路径并行采样
+        paths = []
         for i in range(self.n_paths):
             h_i = base_h.clone()
             
@@ -119,58 +124,26 @@ class RadixCacheGRAM(nn.Module):
                     h_i = cached
                     continue
                 
-                # GRAM 变分推理
+                # 标准推理（无 ε 注入）
                 h_i = self.base_model.hrm_step(h_i, input_ids)
                 radix_cache.put(h_i.hash(), h_i)
             
-            trajectories.append(h_i)
+            paths.append(h_i)
         
-        # 综合 N 条轨迹
+        # 综合 N 条路径
         # 策略 1：平均
-        # h_final = torch.stack(trajectories).mean(dim=0)
+        # h_final = torch.stack(paths).mean(dim=0)
         
         # 策略 2：投票（仅对离散输出）
-        # h_final = vote(trajectories)
+        # h_final = vote(paths)
         
         # 策略 3：加权（按置信度）
-        h_final = weighted_aggregate(trajectories)
+        h_final = weighted_aggregate(paths)
         
         return self.base_model.lm_head(h_final)
 ```
 
-### 3.2 Radix Cache 实现
-
-```python
-class RadixTreeNode:
-    """Radix Tree 节点（共享前缀缓存）"""
-    def __init__(self, hidden_state=None):
-        self.hidden_state = hidden_state
-        self.children = {}  # {prefix_hash: RadixTreeNode}
-
-class RadixCache:
-    def __init__(self, base_hidden):
-        self.root = RadixTreeNode(base_hidden)
-    
-    def get(self, prefix_hash):
-        """检索缓存的前缀 hidden state"""
-        node = self.root
-        for h in prefix_hash:
-            if h not in node.children:
-                return None
-            node = node.children[h]
-        return node.hidden_state
-    
-    def put(self, prefix_hash, hidden_state):
-        """存储前缀 hidden state"""
-        node = self.root
-        for h in prefix_hash:
-            if h not in node.children:
-                node.children[h] = RadixTreeNode()
-            node = node.children[h]
-        node.hidden_state = hidden_state
-```
-
-### 3.3 关键优化
+### 4.2 关键优化
 
 | 优化 | 收益 |
 |------|------|
@@ -180,13 +153,13 @@ class RadixCache:
 
 ---
 
-## 4. 层次化 GRAM 集成（C.3）
+## 5. 层次化集成（C.3）
 
-### 4.1 完整架构
+### 5.1 完整架构
 
 ```python
-class HierarchicalGRAM(nn.Module):
-    """层次化推理 + GRAM 多轨迹"""
+class HierarchicalMultipath(nn.Module):
+    """层次化推理 + 多路径"""
     def __init__(self, base_model, K_main=2, K_sub=1, n_subpaths=3):
         super().__init__()
         self.base_model = base_model
@@ -215,7 +188,7 @@ class HierarchicalGRAM(nn.Module):
         return self.base_model.lm_head(h)
 ```
 
-### 4.2 与 C.2 对比
+### 5.2 与 C.2 对比
 
 | 维度 | C.2 Radix Cache | C.3 层次化 |
 |------|----------------|------------|
@@ -226,20 +199,20 @@ class HierarchicalGRAM(nn.Module):
 
 ---
 
-## 5. 测试时 Scaling 实验
+## 6. 测试时 Scaling 实验
 
-### 5.1 Scaling 曲线设计
+### 6.1 Scaling 曲线设计
 
 | 配置 | N 路径 | K 步 | 总循环步 | 延迟 |
 |------|:---:|:---:|:---:|:---:|
 | 基准 | 1 | 2 | 2 | 100ms |
-| 多路径 | 2 | 2 | 4 | ~110ms |
+| 多路径 | 2 | 2 | 4 | ~120ms |
 | 多路径 | 4 | 2 | 8 | ~130ms |
 | 多路径 | 8 | 2 | 16 | ~170ms |
 | 多路径 + 早退 | 4 | 平均 3 | 12 | ~150ms |
 | 多路径 + 层次化 | 4 | 主+子 | ~12 | ~180ms |
 
-### 5.2 绘制 Pareto 曲线
+### 6.2 绘制 Pareto 曲线
 
 ```
 精度
@@ -250,14 +223,14 @@ class HierarchicalGRAM(nn.Module):
  │    ●
  │     ●  4 路径 + 早退（~150ms）
  │      ●
- │       ●  2 路径 K=2（~110ms）
+ │       ●  2 路径 K=2（~120ms）
  │        ●
  │         ●  1 路径 K=2（100ms）
  │          ●  1 路径 K=1（50ms）
  └────────────────────────────→ 延迟
 ```
 
-### 5.3 推荐配置
+### 6.3 推荐配置
 
 基于 Pareto 曲线：
 - **端侧对话**：1 路径 K=2（100ms）+ 早退
@@ -266,29 +239,23 @@ class HierarchicalGRAM(nn.Module):
 
 ---
 
-## 6. 实验设计
+## 7. 实验设计
 
-### 6.1 训练配置
+### 7.1 训练配置
 
 ```python
 # 共享训练配置（基于 v2.0 推荐组合）
 training_config = {
-    'base': 'logos_v2_recommended',  # K=2 + 早退 + Radix Cache
+    'base': 'logos_v2_recommended',  # A.3 + 多种循环策略
     'lr': 1e-4,
     'warmup': 2000,
     'batch_size': 64,
     'seq_length': 2048,
     'total_tokens': 4_000_000_000,
-    
-    'gram': {
-        'mu_proj_hidden': 768,
-        'sigma_proj_hidden': 768,
-        'kl_weight': 0.1,
-    },
 }
 ```
 
-### 6.2 评估指标
+### 7.2 评估指标
 
 | 指标 | 目的 |
 |------|------|
@@ -296,9 +263,8 @@ training_config = {
 | **N 路径 scaling 曲线** | 端侧最优 N |
 | **Radix Cache 命中率** | 缓存效率 |
 | **单 token 延迟** | 端侧预算 |
-| **KL 散度监控** | GRAM 变分稳定性 |
 
-### 6.3 决策任务数据集
+### 7.3 决策任务数据集
 
 | 数据集 | 类型 | 用途 |
 |--------|------|------|
@@ -308,19 +274,19 @@ training_config = {
 
 ---
 
-## 7. 验收标准
+## 8. 验收标准
 
-### 7.1 单实验验收
+### 8.1 单实验验收
 
 | 验收项 | 合格线 | 优秀线 |
 |-------|:---:|:---:|
-| C.1 GRAM 训练稳定 | ELBO 收敛 | 无 mode collapse |
+| 多路径基础训练稳定 | loss 收敛 | 收敛且无 mode collapse |
 | C.2 Radix Cache 4 路径延迟 | < 1.5x K=2 | < 1.2x K=2 |
 | C.2 Radix Cache 4 路径决策质量 | 比单轨迹 +5% | 比单轨迹 +10% |
 | C.3 层次化延迟 | < 3x K=1 | < 2.5x K=1 |
 | C.3 层次化决策质量 | 比单轨迹 +3% | 比单轨迹 +8% |
 
-### 7.2 测试时 Scaling 验收
+### 8.2 测试时 Scaling 验收
 
 | 验收项 | 合格线 |
 |-------|:---:|
@@ -330,47 +296,42 @@ training_config = {
 
 ---
 
-## 8. 决策传递：64M → 1B
+## 9. 决策传递：64M → 300M
 
-### 8.1 64M 出《验证报告》后
+### 9.1 64M 出《验证报告》后
 
-| 64M 结论 | 1B 集成策略 |
-|---------|-----------|
-| Radix Cache N=4 路径最优 | 1B v1.5 集成 N=4 Radix Cache |
-| 层次化最优 | 1B v1.5 集成层次化 |
-| 单轨迹 GRAM 已足够 | 1B v1.5 用单轨迹 GRAM |
-| Radix Cache 实现复杂 | 退回单轨迹 GRAM |
+| 64M 结论 | 300M 训练策略 |
+|---------|----------|
+| Radix Cache N=4 路径最优 | 300M 集成 N=4 Radix Cache（**完全从零训练**）|
+| 层次化最优 | 300M 集成层次化 |
+| 单路径多轨迹已足够 | 300M 用单路径（但有并行化）|
+| Radix Cache 实现复杂 | 退回单路径 |
 
-### 8.2 推荐组合（最优假设）
+### 9.2 推荐组合（最优假设）
 
-**v1.0 1B 集成（Month 1-5）**：
+**300M 训练启动（Month 3+）**：
 - A.3 混合风格基座
-- K=2 默认
 - Per-Token 早退
+- Radix Cache N=4 路径（如果验证有效）
 
-**v1.5 1B 集成（Month 7-10）**：
-- 上述 + Radix Cache N=4 路径
-- GRAM 变分注入
-
-**v2.0 完整融合（Month 12+）**：
-- 上述 + SADKO ELF Memory KV → HRM Cross-Attention
+**关键**：300M **不加载 64M 权重**——完全从零训练。
 
 ---
 
-## 9. 相关文档
+## 10. 相关文档
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §4](./logos-64m-validation-plan.md#4-v30gram--radix-cache-多路径决策) | 本文档的父级 |
+| [logos-64m-validation-plan.md §5](./logos-64m-validation-plan.md#5-v30多轨迹并行决策) | 本文档的父级 |
 | [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比（v3.0 基座）|
 | [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略（v3.0 推荐组合来源）|
-| [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-bgram-多轨迹扰动) | GRAM + Radix Cache 高层架构 |
-| [logos-k-strategy.md §4.3](./logos-k-strategy.md#43-radix-cache-多路径并行你提出的方案) | Radix Cache 详细论证 |
-| [docs/references/gram.md](../references/gram.md) | GRAM 原论文笔记 |
+| [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-b多轨迹并行推理端侧化关键) | 多轨迹并行高层架构 |
+| [logos-k-strategy.md §2.3](./logos-k-strategy.md#23-radix-cache-多路径并行) | Radix Cache 详细论证 |
+| [docs/references/gram.md](../references/gram.md) | GRAM 原论文笔记（仅参考）|
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | PLT 架构（Radix Cache 借鉴）|
 
 ---
 
-**最后更新**：2026-07-29
+**最后更新**：2026-07-29（v1.2 重大调整：去除 GRAM 集成）
 **作者**：来自工作流（Logos v3.0 架构设计）
-**版本**：v1.0
+**版本**：v1.2

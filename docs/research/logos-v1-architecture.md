@@ -1,15 +1,26 @@
 # Logos-Native-64M v1.0 架构设计：双时间尺度对比
 
-> **一句话定位**：在 MiniMind3 64M 上对比四种"双时间尺度"实现——HRM H/L、SADKO Split-GQA、混合风格、标准 Transformer 基线，找出 Logos 主线的最优基座架构。
-> **上游文档**：[logos-64m-validation-plan.md §2](./logos-64m-validation-plan.md#2-v10双时间尺度对比基座适配)
+> **一句话定位**：在 MiniMind3 64M Dense 基座上对比四种"双时间尺度"实现方案，**完全从零训练**，找出 Logos 主线的最优基座架构。
+> **上游文档**：[logos-64m-validation-plan.md §3](./logos-64m-validation-plan.md#3-v10双时间尺度对比基座改造)
 > **下游文档**：[logos-v2-architecture.md](./logos-v2-architecture.md)（基于 v1.0 推荐的基座）
-> **最后更新**：2026-07-29
+> **最后更新**：2026-07-29（v1.2：明确"完全从零训练"）
+
+---
+
+## 0. 关键定位：从零训练
+
+> 📌 **2026-07-29 v1.2 重要说明**：
+> - 本实验**不复用 MiniMind3 64M 预训练权重**
+> - Logos 是全新架构，**完全重新训练**
+> - MiniMind3 64M Dense 仅作**基座参考架构**（提供改造起点）
+> - 不集成 HRM-Text / GRAM 等外部权重
+> - 训练数据可参考 MiniMind3 原始 Pretrain 子集，但训练流程从零开始
 
 ---
 
 ## 1. 设计目标
 
-**找到 Logos 64M v1.0 的最优基座架构**——四种"双时间尺度"实现方案中，A.3 混合风格应最优。
+**找到 Logos 64M 的最优基座架构**——四种"双时间尺度"实现方案中，A.3 混合风格应最优。
 
 **验收标准**：
 - A.3 PPL 优于 A.4 基线 ≥ 5%（合格）/ ≥ 10%（优秀）
@@ -18,10 +29,10 @@
 
 ---
 
-## 2. MiniMind3 64M 基座规格
+## 2. MiniMind3 64M 基座参考规格
 
 ```yaml
-# minimind3_64m_base.yaml
+# minimind3_64m_base.yaml（仅作参考，不加载权重）
 model_type: minimind
 vocab_size: 6400
 hidden_size: 768
@@ -42,6 +53,8 @@ tie_word_embeddings: true
 - 8 KV heads → Split-GQA 最大 4:4 分裂
 - head_dim=48 → 异构 RoPE 需适配
 
+**说明**：规格作架构设计参考，**权重从零训练**。
+
 ---
 
 ## 3. 四种"双时间尺度"实现方案
@@ -51,12 +64,12 @@ tie_word_embeddings: true
 **核心思想**：把 8 层分为 4 H block + 4 L block（交替）。
 
 ```text
-SADKO-HRM-64M v1.0 A.1（HRM 风格）：
+Logos-HRM-64M v1.0 A.1（HRM 风格）：
 ├── Tokenizer: vocab=6400
-├── Embedding: dim=768
+├── Embedding: dim=768（**从零训练**）
 ├── Transformer Blocks × 8（交替 H/L）：
-│   ├── Layer 0: H_block (4 heads)
-│   ├── Layer 1: L_block (4 heads)
+│   ├── Layer 0: H_block
+│   ├── Layer 1: L_block
 │   ├── Layer 2: H_block
 │   ├── Layer 3: L_block
 │   ├── Layer 4: H_block
@@ -64,24 +77,24 @@ SADKO-HRM-64M v1.0 A.1（HRM 风格）：
 │   ├── Layer 6: H_block
 │   └── Layer 7: L_block
 ├── 循环结构：
-│   for h in range(2):     # H cycles
-│       for l in range(2): # L cycles（每 H 周期）
+│   for h in range(H_cycles):
+│       for l in range(L_cycles):
 │           z_L = L_block(z_L + z_H)
 │       z_H = H_block(z_H + z_L)
-└── 总循环步 = 2H × 2L = 4 + 2 H updates = 6 步
+└── 完全从零训练
 ```
 
 **优势**：块级时间尺度分离最清晰（不同 block 独立优化）
 **劣势**：增加深度，推理延迟较高（但 L block 可并行化）
 
-### 3.2 A.2 Split-GQA 风格（SADKO 借鉴）
+### 3.2 A.2 Split-GQA 风格（借鉴 SADKO）
 
 **核心思想**：保持 8 层标准 block，但每个 block 内部 KV heads 分裂。
 
 ```text
-SADKO-HRM-64M v1.0 A.2（Split-GQA 风格）：
+Logos-HRM-64M v1.0 A.2（Split-GQA 风格）：
 ├── Tokenizer: vocab=6400
-├── Embedding: dim=768
+├── Embedding: dim=768（**从零训练**）
 ├── Transformer Blocks × 8：
 │   └── 每个 Block 内部：
 │       ├── SplitGQAAttention:
@@ -91,14 +104,14 @@ SADKO-HRM-64M v1.0 A.2（Split-GQA 风格）：
 ├── 循环结构：
 │   for k in range(K):
 │       z = block(z)  # 标准单 block 循环
-└── K 次循环（与 A.1 不同的循环结构）
+└── 完全从零训练
 ```
 
 **详细实现**（借鉴 SADKO [sadko-v1-architecture.md §5](./sadko-v1-architecture.md)）：
 
 ```python
 class SplitGQAAttention(nn.Module):
-    def __init__(self, hidden_size, num_heads, num_kv_heads, head_dim):
+    def __init__(self, hidden_size, num_heads, num_kv_static, num_kv_dynamic):
         super().__init__()
         # 标准 Q 投影（16 heads）
         self.q_proj = nn.Linear(hidden_size, num_heads * head_dim)
@@ -145,21 +158,22 @@ class SplitGQAAttention(nn.Module):
 **核心思想**：H/L block 独立 + 每个 block 内部 Split-GQA。
 
 ```text
-SADKO-HRM-64M v1.0 A.3（混合风格）：
+Logos-HRM-64M v1.0 A.3（混合风格）：
 ├── Tokenizer: vocab=6400
-├── Embedding: dim=768
+├── Embedding: dim=768（**从零训练**）
 ├── Transformer Blocks × 8（交替 H/L）：
-│   ├── H_block（每 2 层出现 1 次，共 4 个）：
+│   ├── H_block（4 个）:
 │   │   ├── SplitGQAAttention:
 │   │   │   ├── Static Heads: 3（更多静态，base=500k）
 │   │   │   └── Dynamic Heads: 1（少量动态，base=10k）
 │   │   └── SwiGLU FFN
-│   └── L_block（每 2 层出现 1 次，共 4 个）：
+│   └── L_block（4 个）:
 │       ├── SplitGQAAttention:
 │       │   ├── Static Heads: 1（少量静态，base=500k）
 │       │   └── Dynamic Heads: 3（更多动态，base=10k）
 │       └── SwiGLU FFN
-├── 循环结构（同 A.1）：2H × 2L = 6 步
+├── 循环结构（同 A.1）
+└── 完全从零训练
 ```
 
 **核心思想**：
@@ -172,15 +186,7 @@ SADKO-HRM-64M v1.0 A.3（混合风格）：
 
 ### 3.4 A.4 基线（标准 Transformer）
 
-**核心思想**：保持 MiniMind3 64M 原架构，仅做循环。
-
-```text
-SADKO-HRM-64M v1.0 A.4（基线）：
-├── 标准 Transformer Block × 8
-└── for k in range(K): z = block(z)
-```
-
-**目的**：作为对照，验证"双时间尺度"是否真有价值。
+**核心思想**：保持 MiniMind3 64M 原架构，仅做循环。**用于对照验证双时间尺度的价值**。
 
 ---
 
@@ -196,7 +202,10 @@ training:
   optimizer: AdamW
   batch_size: 64
   sequence_length: 2048
-  total_tokens: 4B  # 与 MiniMind3 原始 Pretrain 对齐
+  
+  # 从零训练数据（可参考 MiniMind3 4B tokens，但不加载权重）
+  data: "logos_pretrain_4b"
+  total_tokens: 4_000_000_000
 
 quantization:
   perception_layer: INT8
@@ -215,59 +224,53 @@ constraints:
 **A.1 HRM 风格**：
 - num_h_blocks: 4
 - num_l_blocks: 4
-- H_cycles: 2
+- H_cycles: 2（默认值，由 64M 验证调整）
 - L_cycles: 2
-- 总循环步: 6
 
 **A.2 Split-GQA 风格**：
 - num_kv_heads_static: 4
 - num_kv_heads_dynamic: 4
 - rope_base_static: 500_000
 - rope_base_dynamic: 10_000
-- K: 6（与 A.1 循环步对齐）
 
 **A.3 混合风格**：
 - H_block static_heads: 3
 - H_block dynamic_heads: 1
 - L_block static_heads: 1
 - L_block dynamic_heads: 3
-- H_cycles × L_cycles: 2 × 2 = 6 步
 
 **A.4 基线**：
 - 标准 Transformer
-- K: 6
+- K: 超参数（不固定）
 
 ---
 
-## 5. 权重初始化策略
+## 5. 初始化策略（从零训练）
 
-### 5.1 从 MiniMind3 预训练权重初始化
+### 5.1 重要：从零训练的初始化
 
-**A.1 HRM 风格**：
-- 从 MiniMind3 加载 8 层权重
-- 前 4 层 → H_block
-- 后 4 层 → L_block
-- H_block 初始 bias 略大（偏向全局）
-
-**A.2 Split-GQA 风格**：
-- 从 MiniMind3 加载标准 K/V 投影（8 heads）
-- **劈裂**为 Static 4 + Dynamic 4（按 head index 0-3 为 Static，4-7 为 Dynamic）
-- K_static ← K[:, :4, :], K_dynamic ← K[:, 4:, :]
-
-**A.3 混合风格**：
-- 先按 A.2 加载（block 内劈裂）
-- 再按 A.1 重组（H/L block 角色分工）
-
-**A.4 基线**：
-- 直接加载 MiniMind3 权重
-
-### 5.2 门控初始化
+**不复用 MiniMind3 权重**——所有方案都从零开始训练。
 
 ```python
-# H block 初始化：偏置 = +0.5（偏向全局）
+# 标准初始化
+def init_from_scratch(model):
+    """所有方案都从零初始化"""
+    for module in model.modules():
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(module.weight, mean=0, std=0.02)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0, std=0.02)
+```
+
+### 5.2 H/L block 角色分工（仅结构差异）
+
+```python
+# H block 初始化：偏置略偏向全局
 nn.init.constant_(h_block.gate.bias, 0.5)
 
-# L block 初始化：偏置 = -0.5（偏向局部）
+# L block 初始化：偏置略偏向局部
 nn.init.constant_(l_block.gate.bias, -0.5)
 ```
 
@@ -321,7 +324,7 @@ class LogosLBlock(nn.Module):
 
 ```python
 class LogosMixedModel(nn.Module):
-    """混合风格: H/L blocks + Split-GQA"""
+    """混合风格: H/L blocks + Split-GQA（从零训练）"""
     def __init__(self, config):
         super().__init__()
         self.embed = nn.Embedding(config.vocab_size, config.hidden_size)
@@ -348,18 +351,26 @@ class LogosMixedModel(nn.Module):
         
         self.norm = RMSNorm(config.hidden_size)
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size)
+        
+        # 从零初始化
+        self._init_weights()
+    
+    def _init_weights(self):
+        # 全部从零初始化（不复用任何外部权重）
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                nn.init.normal_(module.weight, mean=0, std=0.02)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
     
     def forward(self, input_ids, h_cycles=2, l_cycles=2):
         z = self.embed(input_ids)
-        z_H = z  # H 状态从输入初始化
-        z_L = z  # L 状态从输入初始化
+        z_H = z
+        z_L = z
         
         for h in range(h_cycles):
             for l in range(l_cycles):
-                # L block 在 H 状态下更新
-                # 交替使用不同的 L block
                 z_L = self.l_blocks[l](z_L + z_H)
-            # H block 在 L 状态更新后更新
             z_H = self.h_blocks[h](z_H + z_L)
         
         return self.lm_head(self.norm(z_H))
@@ -371,7 +382,7 @@ class LogosMixedModel(nn.Module):
 |-----------|------------|
 | [sadko-v1-architecture.md §5 SplitGQAAttention](./sadko-v1-architecture.md) | 直接借鉴，作为 A.2/A.3 的基础组件 |
 | [sadko-v1-architecture.md §5 DualPathFFN](./sadko-v1-architecture.md) | H/L block 内的 FFN 可借鉴 |
-| [sadko-v1-architecture.md §6 权重初始化](./sadko-v1-architecture.md) | K/V 投影劈裂初始化策略 |
+| [sadko-v1-architecture.md §6 权重初始化](./sadko-v1-architecture.md) | 仅参考结构，**不复用权重** |
 
 ---
 
@@ -382,7 +393,7 @@ class LogosMixedModel(nn.Module):
 ```python
 # 共享训练配置
 training_config = {
-    'data': 'minimind3_pretrain_4b',
+    'data': 'logos_pretrain_4b',  # 从零训练数据
     'lr': 1e-4,
     'warmup': 2000,
     'batch_size': 64,
@@ -443,7 +454,7 @@ training_config = {
 |---------|---------|------|
 | A.3 不优于 A.1 | Split-GQA 增加噪声 | 调整 static/dynamic head 比例 |
 | A.3 PPL 崩溃 | 门控初始化不当 | 调整 H/L gate bias |
-| 训练不收敛 | MagicNorm 与 Split-GQA 不兼容 | 加 STARS 谱正则化 |
+| 训练不收敛 | 初始化策略问题 | 加 STARS 谱正则化 |
 
 ---
 
@@ -470,9 +481,9 @@ training_config = {
 
 ## 10. 与 v2.0 的衔接
 
-v1.0 完成后，最优架构（A.3 期望）作为 v2.0 的基线：
+v1.0 完成后，最优架构（A.3 期望）作为 v2.0 的基座：
 - v2.0 B.1-B.5 都在 A.3 上测试不同循环策略
-- 推荐组合：**A.3 + K=2 + 早退 + Radix Cache**
+- 推荐组合：**A.3 + Per-Token 早退 + Radix Cache + 层次化**
 
 ---
 
@@ -480,15 +491,15 @@ v1.0 完成后，最优架构（A.3 期望）作为 v2.0 的基线：
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §2](./logos-64m-validation-plan.md#2-v10双时间尺度对比基座适配) | 本文档的父级 |
+| [logos-64m-validation-plan.md §3](./logos-64m-validation-plan.md#3-v10双时间尺度对比基座改造) | 本文档的父级 |
 | [sadko-v1-architecture.md](./sadko-v1-architecture.md) | SADKO Split-GQA 详细实现（本文档 A.2/A.3 借鉴）|
-| [logos-whitepaper.md §2.2](./logos-whitepaper.md#22-模块-b分层递归潜空间引擎-750m) | H/L block 的高层架构 |
+| [logos-whitepaper.md §2.2](./logos-whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m) | H/L block 的高层架构 |
 | [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略（v2.0 详细论证）|
-| [docs/references/hrm-text.md](../references/hrm-text.md) | HRM-Text 原论文笔记 |
+| [docs/research/hrm-text.md](../references/hrm-text.md) | HRM-Text 原论文笔记（仅参考） |
 | [AGENTS.md §7.5](../../AGENTS.md#75-决策时间表) | Logos 决策时间表 |
 
 ---
 
-**最后更新**：2026-07-29
+**最后更新**：2026-07-29（v1.2 重大调整：从零训练定位）
 **作者**：来自工作流（Logos v1.0 架构设计）
-**版本**：v1.0
+**版本**：v1.2
