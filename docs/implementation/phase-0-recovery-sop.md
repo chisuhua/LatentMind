@@ -10,7 +10,7 @@
 
 | 文档 | 关系 |
 |------|------|
-| [logos-sadko-64m-coordination.md §2](./logos-sadko-64m-coordination.md) | Phase 0 整体框架 |
+| [logos-sadko-64m-coordination.md §2](../research/logos-sadko-64m-coordination.md) | Phase 0 整体框架 |
 | [phase-0-implementation-guide.md](./phase-0-implementation-guide.md) | 标准 SOP（在实施指南中已有，详细执行步骤） |
 | **本文档** | **失败回退决策树 + 紧急升级**（当标准 SOP 失败时使用） |
 
@@ -285,7 +285,7 @@ L3 升级流程
 │   ├─ 重新设计 Phase 0 子任务
 │   ├─ 延期 Phase 0 + 1 月
 │   └─ 暂停双轨，重新评估方向
-├─ 4. 更新 [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md)
+├─ 4. 更新 [logos-sadko-64m-coordination.md](../research/logos-sadko-64m-coordination.md)
 └─ 5. 通知所有参与者
 ```
 
@@ -331,7 +331,7 @@ L3 升级流程
 
 | 文档 | 关系 |
 |------|------|
-| [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md) | Phase 0 整体框架 |
+| [logos-sadko-64m-coordination.md](../research/logos-sadko-64m-coordination.md) | Phase 0 整体框架 |
 | [phase-0-implementation-guide.md](./phase-0-implementation-guide.md) | 标准实施 SOP（在实施指南中） |
 | **本文档** | **失败回退详细决策树**（当标准 SOP 失败时使用） |
 

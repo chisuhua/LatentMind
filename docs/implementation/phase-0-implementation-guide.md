@@ -1,6 +1,6 @@
 # Phase 0 实施指南：脚本、配置与 SOP
 
-> **一句话定位**：Phase 0（共享前置验证）的**可执行手册**——每个 P.0.x 的训练脚本、配置文件、监控仪表盘、错误处理 SOP、验收脚本都完整给出，配合 [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md) 使用。
+> **一句话定位**：Phase 0（共享前置验证）的**可执行手册**——每个 P.0.x 的训练脚本、配置文件、监控仪表盘、错误处理 SOP、验收脚本都完整给出，配合 [logos-sadko-64m-coordination.md](../research/logos-sadko-64m-coordination.md) 使用。
 > **性质**：协调文档的**配套执行手册**
 > **最后更新**：2026-07-29（v1.0 新增）
 
@@ -12,7 +12,7 @@
 
 | 文档 | 关系 |
 |------|------|
-| [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md) | "为什么做" - 协调框架 |
+| [logos-sadko-64m-coordination.md](../research/logos-sadko-64m-coordination.md) | "为什么做" - 协调框架 |
 | **本文档** | **"怎么做" - 执行手册** |
 
 ### 0.2 硬件要求
@@ -1399,10 +1399,10 @@ Phase 0 P.0.X 失败
 
 | 文档 | 关系 |
 |------|------|
-| [logos-sadko-64m-coordination.md §2](./logos-sadko-64m-coordination.md) | Phase 0 共享前置的"为什么" |
+| [logos-sadko-64m-coordination.md §2](../research/logos-sadko-64m-coordination.md) | Phase 0 共享前置的"为什么" |
 | **本文档** | Phase 0 的"怎么做" |
-| [logos-64m-validation-plan.md §0+](./logos-64m-validation-plan.md) | Logos 64M 对 Phase 0 的依赖 |
-| [sadko-64m-validation-plan.md §〇+](./sadko-64m-validation-plan.md) | SADKO 64M 对 Phase 0 的依赖 |
+| [logos-64m-validation-plan.md §0+](../research/logos-64m-validation-plan.md) | Logos 64M 对 Phase 0 的依赖 |
+| [sadko-64m-validation-plan.md §〇+](../research/sadko-64m-validation-plan.md) | SADKO 64M 对 Phase 0 的依赖 |
 | [phase-0-recovery-sop.md](./phase-0-recovery-sop.md) | **配套：失败回退决策树详细 SOP** |
 
 ---

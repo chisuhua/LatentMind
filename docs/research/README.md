@@ -67,8 +67,8 @@
 | 文件 | 内容 | 状态 |
 |---|---|---|
 | [logos-sadko-64m-coordination.md](./logos-sadko-64m-coordination.md) | **Logos / SADKO 双轨 64M 协调中枢**：Phase 0 共享前置验证（~5 周）+ Phase 1 并行验证 + Phase 2 交叉验证 + Phase 3 决策矩阵；2026-07-29 关键缺口发现后新增 | ✅ 新增 |
-| [phase-0-implementation-guide.md](./phase-0-implementation-guide.md) | **Phase 0 实施指南**：6 项 P.0.x 的训练脚本、配置 YAML、监控仪表盘、错误处理 SOP、验收脚本（~600 行可执行内容）；Phase 0 验收报告模板；通信协议 | ✅ 新增 |
-| [phase-0-recovery-sop.md](./phase-0-recovery-sop.md) | **Phase 0 失败回退 SOP**：每个 P.0.x 失败决策树、紧急升级路径（L1/L2/L3）、联系人矩阵、失败案例库 | ✅ 新增 |
+| [phase-0-implementation-guide.md](../implementation/phase-0-implementation-guide.md) | **Phase 0 实施指南**：6 项 P.0.x 的训练脚本、配置 YAML、监控仪表盘、错误处理 SOP、验收脚本（~600 行可执行内容）；Phase 0 验收报告模板；通信协议 | ✅ 新增 |
+| [phase-0-recovery-sop.md](../implementation/phase-0-recovery-sop.md) | **Phase 0 失败回退 SOP**：每个 P.0.x 失败决策树、紧急升级路径（L1/L2/L3）、联系人矩阵、失败案例库 | ✅ 新增 |
 
 ### 2.2 SADKO 探索分支文档
 

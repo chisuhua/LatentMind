@@ -20,8 +20,9 @@
 > - **Logos 路线图**：[`docs/research/logos-roadmap.md`](docs/research/logos-roadmap.md)
 > - **Logos 64M 验证计划**：[`docs/research/logos-64m-validation-plan.md`](docs/research/logos-64m-validation-plan.md)
 > - **Logos / SADKO 双轨协调中枢**：[`docs/research/logos-sadko-64m-coordination.md`](docs/research/logos-sadko-64m-coordination.md)（Phase 0 共享前置 + 交叉验证 + 决策矩阵）
-> - **Phase 0 实施指南**：[`docs/research/phase-0-implementation-guide.md`](docs/research/phase-0-implementation-guide.md)（6 项 P.0.x 的脚本 + 配置 + SOP + 验收）
-> - **Phase 0 失败回退 SOP**：[`docs/research/phase-0-recovery-sop.md`](docs/research/phase-0-recovery-sop.md)（失败决策树 + 升级路径）
+> - **Phase 0 实施指南**：[`docs/implementation/phase-0-implementation-guide.md`](docs/implementation/phase-0-implementation-guide.md)（6 项 P.0.x 的脚本 + 配置 + SOP + 验收）
+> - **Phase 0 失败回退 SOP**：[`docs/implementation/phase-0-recovery-sop.md`](docs/implementation/phase-0-recovery-sop.md)（失败决策树 + 升级路径）
+> - **实施文档索引**：[`docs/implementation/README.md`](docs/implementation/README.md)（近期可执行的工程规范集合）
 > - **Logos v1.0 架构（双时间尺度对比）**：[`docs/research/logos-v1-architecture.md`](docs/research/logos-v1-architecture.md)
 > - **Logos v2.0 架构（多种循环策略）**：[`docs/research/logos-v2-architecture.md`](docs/research/logos-v2-architecture.md)
 > - **Logos v3.0 架构（GRAM + Radix Cache）**：[`docs/research/logos-v3-architecture.md`](docs/research/logos-v3-architecture.md)
