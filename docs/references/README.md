@@ -16,10 +16,12 @@
 | [trm.md](./trm.md) | TRM 论文笔记（"Less is More" 直接挑战 HRM）| 🟡 重要 | ✅ |
 | [rrm-survey.md](./rrm-survey.md) | RRM-B 谱系调查（TRM / Looped TF / Hyperloop / SE-RRM / Huginn / Ouro + 下一代架构）| 🟡 重要 | ✅ |
 | [rrm-reward.md](./rrm-reward.md) | RRM-A 笔记（清华 2505.14674，奖励推理模型）| 🟡 参考 | ✅ |
+| [loopcoder-v2.md](./loopcoder-v2.md) | **LoopCoder-v2 / PLT 笔记**（"Only Loop Once" 实证 + 循环崩溃机制诊断）| 🟡 重要 | ✅ 新增 2026-07-29 |
+| [huginn.md](./huginn.md) | **Huginn 3.5B 笔记**（latent recurrent 反例：50 步循环仍 work）| 🟡 重要 | ✅ 新增 2026-07-29 |
+| [stars.md](./stars.md) | **STARS 2026 笔记**（循环崩溃的 LayerNorm 根因 + Jacobian 谱半径修复）| 🟡 重要 | ✅ 新增 2026-07-29 |
+| [per-token-convergence.md](./per-token-convergence.md) | **Per-Token Fixed-Point 笔记**（90% token 6 步收敛，10% 需要 8 步——动态 K 证据）| 🟡 重要 | ✅ 新增 2026-07-29 |
 | [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
 | [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
-| `huginn.md` | Huginn 3.5B 笔记（latent recurrent 对比） | 🟢 对比 | ⏳ 合并到 rrm-survey.md §1.5 |
-| `ouro.md` | Ouro 1.4B 笔记（looped 对比） | 🟢 对比 | ⏳ 合并到 rrm-survey.md §1.5 |
 
 > 📦 **新增目录**：[../rfcs/](../rfcs/) 存放**内部 R&D 设计提案**（GRR-300M、MR-300M），不属于参考资料。
 
@@ -134,7 +136,17 @@ references/
 | 开源项目清单？ | §4 开源项目与资源 |
 | 与 LatentMind 关系？ | §6 与 LatentMind 项目的关系 |
 
-### 3.7 我想查看论文原文 PDF/HTML → 去哪查
+### 3.7 我想了解"循环越多越深"假设的实证 → 去哪查
+
+| 问题 | 查哪份 |
+|---|---|
+| "Only Loop Once" 是真的吗？为什么？ | [loopcoder-v2.md](./loopcoder-v2.md) §4 / §5 |
+| Huginn 反例：50 步循环仍 work？ | [huginn.md](./huginn.md) §4.1 |
+| 循环崩溃的根因？怎么修？ | [stars.md](./stars.md) §3 / §4 |
+| 90% token 6 步就够，10% 需要 8 步？ | [per-token-convergence.md](./per-token-convergence.md) §3 |
+| HRM-Text 的 K=8 假设是否成立？ | [loopcoder-v2.md §6.1](./loopcoder-v2.md#61-主线hrm-text-需要的前置实验) + [rrm-survey.md §5](./rrm-survey.md#5-与-latentmind-决策相关) |
+
+### 3.8 我想查看论文原文 PDF/HTML → 去哪查
 
 | 问题 | 查 [papers/README.md](./papers/README.md) 哪一节 |
 |---|---|
@@ -162,10 +174,16 @@ references/
 - ✅ TRM 论文（arXiv:2510.04871）— PDF + HTML
 - ✅ TRM GitHub 仓库（待补充链接）
 
-### 4.2 待补充（外部源）
+### 4.2 已完成（外部源）
 
-- ⏳ Ouro 1.4B（arXiv ID 待查）
-- ⏳ Huginn 3.5B（arXiv ID 待查）
+- ✅ **Huginn 3.5B**（arXiv:2502.05171）→ 笔记：[huginn.md](./huginn.md)
+- ✅ **LoopCoder-v2 / PLT**（arXiv:2606.18023）→ 笔记：[loopcoder-v2.md](./loopcoder-v2.md)
+- ✅ **STARS 2026**（ICML 2026，arXiv 待补）→ 笔记：[stars.md](./stars.md)
+- ✅ **Per-Token Convergence**（2026-07，arXiv 待补）→ 笔记：[per-token-convergence.md](./per-token-convergence.md)
+
+### 4.3 待补充（外部源）
+
+- ⏳ Ouro 1.4B（arXiv ID 待查）→ 候选 [huginn.md §8](./huginn.md#8-相关工作) 中 HRM-Text Table 4 引用
 - ⏳ HRM-MoE 仓库（GitHub: XiaoYee/HRM-MoE，无 paper）
 - ⏳ MagicNorm 早期引用（HRM 论文内的概念，无独立 paper）
 - ⏳ AdamATan2 优化器原文（HRM-Text 论文 [20] 引用）
@@ -191,4 +209,32 @@ references/
 
 ---
 
-**最后更新**：2026-06-13
+## 6. 2026-07-29 重要更新（LoopCoder-v2 冲击波 + Logos 主线命名）
+
+**新增 4 份循环架构参考笔记**，回应 LoopCoder-v2 论文对"循环越多越深"假设的实证挑战：
+
+| 笔记 | 关键贡献 |
+|---|---|
+| [loopcoder-v2.md](./loopcoder-v2.md) | PLT 架构 + "Only Loop Once" 核心发现 + 三个崩溃机制 |
+| [huginn.md](./huginn.md) | 反例：3.5B 无 CLP 循环可到 50 步，证明崩溃是 PLT 特异性 |
+| [stars.md](./stars.md) | 崩溃的 LayerNorm 根因 + Jacobian 谱半径修复（12.21pp 性能恢复）|
+| [per-token-convergence.md](./per-token-convergence.md) | 90% token 6 步收敛 → 动态 K（per-token early exit）证据 |
+
+**主线架构命名升级**（2026-07-29）：
+- **Logos / 逻各斯** = 主线架构的正式名称（希腊哲学：理性之原则）
+- 涵盖 HRM-Text + GRAM + 双流解码 + 端侧集成
+- 详细文档见 [../research/logos-whitepaper.md](../research/logos-whitepaper.md) / [logos-k-strategy.md](../research/logos-k-strategy.md) / [logos-roadmap.md](../research/logos-roadmap.md)
+
+**对 LatentMind 决策影响**（详见 [docs/research/README.md §0](../research/README.md#0-latentmind-双轨架构定位logos-主线--sadko-探索分支)）：
+1. **K-sweep 降级**：从阻塞性前置 → Plan B 条件性实验（[RFC-0001](../rfcs/RDD-0001-k-sweep-experiment.md)）
+2. **SADKO 路线从"文本认知"升级为"多模态流形记忆"**（基于第一性原理：双向 + Flow Matching + FSQ 天然为流形设计）
+3. **双轨分工**正式确立：Logos = 推理+决策，SADKO = 感知+记忆+知识+多模态
+4. **融合接口**：ELF Memory KV → HRM Cross-Attention 单点（"HRM 是大脑皮层，ELF 是海马体"）
+
+**架构意义**：循环与多模态是**互补**而非竞争的两条路线
+- 循环是**推理工具**（latent space 内的逻辑推演）→ Logos 主线
+- 多模态是**感知工具**（连续流形上的信息压缩）→ SADKO 分支
+
+---
+
+**最后更新**：2026-07-29

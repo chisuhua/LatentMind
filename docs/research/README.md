@@ -5,21 +5,27 @@
 
 ---
 
-## 0. SADKO 路线在 LatentMind 项目中的定位
+## 0. LatentMind 双轨架构定位（Logos 主线 + SADKO 探索分支）
 
-SADKO 文档体系是 LatentMind 项目内**与主线（HRM-Text + GRAM）并行的补充探索分支**，不替代主线。
+> 📌 **2026-07-29 命名升级**：主线正式命名为 **Logos / 逻各斯**（希腊哲学：理性之原则），SADKO 路线升级为"**多模态流形记忆与感知**"核心研究方向。
 
-| 维度 | LatentMind 主线 | SADKO 探索分支 |
+| 维度 | **Logos 主线** | **SADKO 探索分支** |
 | :--- | :--- | :--- |
 | **backbone** | HRM-Text（潜空间递归推理） | AR-Native（标准 Decoder-only + Split-GQA） |
 | **记忆范式** | GRAM 多轨迹概率推理 | ELF Flow Matching + FSQ 全局语义压缩 |
-| **核心哲学** | 潜空间推理 + 多轨迹采样 | 异构双脑（AR 之箭 + FM 之环） + 分子自组装 |
+| **核心哲学** | 循环即推理 + 多轨迹即决策 | 异构双脑（AR 之箭 + FM 之环） + 分子自组装 |
+| **天然优势域** | **推理 + 决策** | **感知 + 记忆 + 知识 + 多模态** |
 | **共享假设** | 压缩即智能 / 潜空间为核心状态 / 端侧推理 | 同左 |
 | **互斥假设** | 单一递归骨干 + 内部循环 | 异构架构 + 跨界面对齐（扩散桥梁） |
 
-两条路线共享"压缩即智能"的哲学基础，但骨干选择与记忆机制不同。**是否落地、何时落地、替代还是融合，应基于两条路线各自产出的 64M《已验证/已证伪机制清单》对比决定**。当前状态：SADKO 在 64M 阶段的探索尚未产出机制清单，应保留为备选/补充，避免在两条路线均未完成小规模验证前过早锁定。
+两条路线共享"压缩即智能"的哲学基础，但骨干选择与记忆机制不同。**是否落地、何时落地、替代还是融合，应基于两条路线各自产出的 64M《已验证/已证伪机制清单》对比决定**。
 
-相关主线索：项目根目录的 [`AGENTS.md`](../../AGENTS.md) 与 [`docs/architecture.md`](../../docs/architecture.md)。
+**关键事件**（2026-07-29）：
+1. **LoopCoder-v2 论文**（arXiv:2606.18023）证明循环架构方向正确（K=2 > K=1 +50%）→ Logos 主线 K=4-8 假设无须前置验证
+2. **第一性原理分工**：循环/多轨迹偏置"序列+收敛+不确定性" → 推理+决策（Logos）；双向/FM/FSQ 偏置"空间+流形+离散锚点" → 感知+记忆+知识+多模态（SADKO）
+3. **K-sweep 降级**：从"阻塞性前置" → "Plan B 条件性实验"，详见 [RDD-0001](../rfcs/RDD-0001-k-sweep-experiment.md)
+
+详细主线文档见 [logos-whitepaper.md](./logos-whitepaper.md) / [logos-k-strategy.md](./logos-k-strategy.md) / [logos-roadmap.md](./logos-roadmap.md)。
 
 ---
 
@@ -35,6 +41,16 @@ SADKO 文档体系是 LatentMind 项目内**与主线（HRM-Text + GRAM）并行
 
 ## 2. 文件清单
 
+### 2.1 Logos 主线文档
+
+| 文件 | 内容 | 状态 |
+|---|---|---|
+| [logos-whitepaper.md](./logos-whitepaper.md) | **Logos 主线架构白皮书**：循环即推理 + 多轨迹即决策 + 端侧哲学；v1.0 Demo + v1.5 完整架构蓝图；与 ChipForge APU 集成；与 SADKO 双轨分工；风险与降级；演进路径 | ✅ 新增 |
+| [logos-k-strategy.md](./logos-k-strategy.md) | **Logos K 值策略与端侧可行性**：LoopCoder-v2 的主线消化 + K=2 默认策略 + per-token early exit + PLT 并行化移植 + 端侧时延预算 + RDD-0001 降级为 Plan B | ✅ 新增 |
+| [logos-roadmap.md](./logos-roadmap.md) | **Logos 主线路线图**（+0 到 +12 月）：详细里程碑、验收标准、与 SADKO 协同、双轨分工决策时间表 | ✅ 新增 |
+
+### 2.2 SADKO 探索分支文档
+
 | 文件 | 内容 | 状态 |
 |---|---|---|
 | [sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 架构设计与演进白皮书：异构双脑（左脑 AR + 右脑 ELF）+ 扩散桥梁，从 64M 机制证伪到 70B 规模化演进的全要素合并稿 | ✅ |
@@ -47,12 +63,29 @@ SADKO 文档体系是 LatentMind 项目内**与主线（HRM-Text + GRAM）并行
 | [sadko-elf-phase0-manual.md](./sadko-elf-phase0-manual.md) | Phase 0 执行手册：FM+FSQ 收敛验证的生命体征基线、监控仪表盘、分阶段干预策略、死亡线与逃生舱、交付物清单 | ✅ |
 | [sadko-elf-lifecycle.md](./sadko-elf-lifecycle.md) | 右脑生命周期管理：增量生长三模式（码字招募/构象异构/模块扩展）、结构化遗忘（受控自噬/稳态可塑性）、系统存活六维检查清单 | ✅ |
 | [sadko-open-issues.md](./sadko-open-issues.md) | 🔴 文档体系审查：5 项技术冲突（A类）、8 项数值/维度错误（B类）、8 项表述不一致（C类）、10 项设计遗漏（D类）、6 个开放问题（E类）+ 处理顺序 | ⚠️ 大项已裁决，逐条落实中 |
+| [sadko-multimodal-native.md](./sadko-multimodal-native.md) | SADKO 多模态原生设计：2026-07-29 增补，从第一性原理论证右脑（双向+FM+FSQ）天然契合流形感知/记忆/知识/多模态，配套主线循环/多轨迹的推理/决策分工 | ✅ 新增 |
 
 ---
 
 ## 3. SADKO 速查入口
 
 ### 3.1 架构设计（白皮书）
+
+#### Logos 主线（推理 + 决策）
+
+| 问题 | 查 [logos-whitepaper.md](./logos-whitepaper.md) 哪一节 |
+|---|---|
+| Logos 核心设计哲学（循环即推理 / 多轨迹即决策 / 端侧哲学）？ | §1 |
+| Logos 完整架构蓝图（感知 + HRM + GRAM + 双流解码）？ | §2 |
+| Logos 与 SADKO 的双轨分工？ | §3 |
+| Logos 训练 3 阶段？ | §4 |
+| Logos 与 ChipForge APU 集成？ | §5 |
+| Logos 风险与降级预案？ | §6 |
+| Logos 演进路径（64M 验证 → 1B 端侧 → 1.5B 完整）？ | §7 |
+| K 值策略、LoopCoder-v2 应对？ | [logos-k-strategy.md](./logos-k-strategy.md) |
+| 详细路线图与决策时间表？ | [logos-roadmap.md](./logos-roadmap.md) |
+
+#### SADKO 探索分支（感知 + 记忆 + 知识 + 多模态）
 
 | 问题 | 查 [sadko-whitepaper.md](./sadko-whitepaper.md) 哪一节 |
 |---|---|

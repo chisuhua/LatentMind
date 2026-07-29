@@ -53,11 +53,15 @@
 
 ### 1.5 Huginn & Ouro
 
-- **状态**：⚠️ **arXiv 标题搜索未直接命中**（可能是项目代号而非论文标题）
+- **状态**：✅ **Huginn 3.5B 已找到（arXiv:2502.05171）— 详细笔记见 [huginn.md](./huginn.md)**
 - **HRM-Text 论文 Table 4 列为基线**：
   - Huginn 3.5B: MMLU 31.4, MATH 12.6（远低于 HRM-Text 1B 的 60.7 / 56.2）
   - Ouro 1.4B: MMLU 67.4, MATH 22.4（MMLU 高于 HRM-Text 但 MATH 远低）
-- **TODO**：找到原始论文链接
+- **关键发现（详见 [huginn.md §4](./huginn.md#4-关键数字)）**：
+  - Huginn 3.5B 在 GSM8K 上随循环数 K=1→K=50 **持续提升**（34.6 → 64.8），**无 K=3 崩溃**
+  - **反例意义**：证明 LoopCoder-v2 的"Only Loop Once"是 PLT 架构特有现象，不是循环本身的固有属性
+  - HRM-Text 1B 的 K=4-8 假设**仍可能成立**——层次化结构可能免疫崩溃
+- **Ouro**：arXiv ID 仍待查
 
 ---
 
@@ -135,10 +139,30 @@
 
 ## 6. 已知未解决问题
 
-- [ ] Huginn / Ouro 的原始 arXiv 论文 ID（HRM-Text Table 4 引用但标题搜索未直接命中）
+- [x] **Huginn 3.5B arXiv ID** → 已找到 2502.05171，详细笔记见 [huginn.md](./huginn.md)（2026-07-29 完成）
+- [ ] Ouro 1.4B arXiv ID（HRM-Text Table 4 引用，标题搜索仍未命中）
 - [ ] PTRM（删除）：之前的草稿提到"PTRM"作为 RRM-B 成员之一，但 arXiv 1909.04610 "PTRM" 实为 *Perceived Terrain Realism Metrics*（地形真实感评估），与循环推理**无关**。**已删除避免误导**。
 - [ ] Looped Transformer 的早期论文（非 Hyperloop 版本）
 - [ ] Liquid AI / SpikingBrain 的具体公开模型/代码链接
+
+---
+
+## 7. 2026-07-29 增补：LoopCoder-v2 冲击波
+
+> 完整论证见 [loopcoder-v2.md](./loopcoder-v2.md)。本节仅补充对 RRM-B 谱系的影响。
+
+**新增谱系成员**：
+
+| 名称 | 谱系位置 | 关键贡献 |
+|------|---------|---------|
+| [LoopCoder-v2 / PLT](./loopcoder-v2.md) | RRM-B + 并行循环 | "Only Loop Once" + 3 个崩溃机制诊断 |
+| [STARS 2026](./stars.md) | RRM-B 修复方案 | LayerNorm 根因 + Jacobian 谱半径正则化（修复 12.21pp）|
+| [Per-Token Convergence](./per-token-convergence.md) | RRM-B 动态深度 | 90% token 6 步收敛，10% 需要 8 步 |
+
+**对 RRM-B 谱系整体的影响**：
+1. "循环次数越多越好"是**迷信**——但**崩溃是架构特异性的**，不是循环本身的属性
+2. Huginn（无 CLP 顺序循环）vs PLT（有 CLP 扁平循环）是**对照实验**——CLP + 共享参数是 PLT 崩溃的根因之一
+3. HRM-Text（层次化 + 不同参数）的 K=4-8 假设**需要独立验证**——见 [RDD-0001 RFC](../rfcs/RDD-0001-k-sweep-experiment.md)
 
 ---
 

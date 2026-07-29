@@ -24,6 +24,7 @@
 |---|---|---|---|
 | [grr-300-gated-recursive-refiner.md](./grr-300-gated-recursive-refiner.md) | 300M（**即插即用插件**）| 📝 草案 | 与 [mr-300](./mr-300-micro-refiner.md) 共享设计哲学 |
 | [mr-300-micro-refiner.md](./mr-300-micro-refiner.md) | ~295M（**科学实验平台**）| 📝 草案 | 与 [grr-300](./grr-300-gated-recursive-refiner.md) 关联 |
+| [RDD-0001-k-sweep-experiment.md](./RDD-0001-k-sweep-experiment.md) | **MiniMind3 64M（快速消融）**| 📝 **Plan B 草案** | **Logos 主线集成失败的 Plan B**——2026-07-29 由 LoopCoder-v2 论文触发，原为主线前置，**现降级为条件性消融** |
 
 ---
 
