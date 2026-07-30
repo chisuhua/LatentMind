@@ -1,7 +1,7 @@
 # SADKO 文档体系审查：冲突、遗漏与待讨论清单
 
 > **一句话定位**：对 docs/research 全部 8 份 SADKO 文档的一致性审查结果——技术冲突（需裁决）、数值/维度错误（需修正）、表述不一致（需统一）、设计遗漏（需补全）、开放问题（需讨论）
-> **审查范围**：sadko-whitepaper · sadko-64m-validation-plan · sadko-v1/v2/v3-architecture · sadko-elf-vs-gdm-review · sadko-elf-graph-emergence · sadko-elf-phase0-manual · sadko-elf-lifecycle
+> **审查范围**：whitepaper · 64m-validation-plan · v1/v2/v3-architecture · elf-vs-gdm-review · elf-graph-emergence · elf-phase0-manual · elf-lifecycle
 > **最后更新**：2026-07-29
 > **状态**：大项已裁决（见 §7 落实记录），剩余 D/E 类问题（设计遗漏、开放讨论）仍待逐项推进。
 
@@ -13,14 +13,14 @@
 
 ### A-01 🔴 RoPE base 分配与 NTK 缩放理论倒挂
 
-- **位置**：[whitepaper](./sadko-whitepaper.md) §2.2/§3.2 · [v1-arch](./sadko-v1-architecture.md) §3 决策表/§5.1 · [validation-plan](./sadko-64m-validation-plan.md) §2.3
+- **位置**：[whitepaper](./whitepaper.md) §2.2/§3.2 · [v1-arch](./v1-architecture.md) §3 决策表/§5.1 · [validation-plan](./64m-validation-plan.md) §2.3
 - **问题**：所有文档称 "Static 低频 base=10k 保长程，Dynamic 高频 base=500k 保时序"。但按 RoPE 频率公式 $\theta_i = b^{-2i/d}$ 与 NTK 上下文外推实践（LLaMA 系长上下文都是**调大** base，10k→500k）：**base=10k 是高频快旋转（短程锐利），base=500k 才是低频长程配置**。即 base 分配与"保长程/保时序"的理由恰好倒挂；"低频/高频"的措辞也标反了。
 - **连带影响**：v1.0 熵分离实验（Static 熵 < Dynamic 熵 且差值 >0.3）的理论预期需要重新推导——慢旋转头注意力更平坦、熵更高，当前判定标准可能因错误的理由而"意外正确"，也可能方向完全相反。
 - **待裁决**：(a) 交换 base 分配（Static=500k 长程，Dynamic=10k 短程）；(b) 维持分配但修正理由与实验预期；(c) 先做一个 1-epoch 的 RoPE 消融预实验让数据裁决。**建议在写 v1.0 代码前完成 (c)。**
 
 ### A-02 🔴 压缩数据源层选择与融合方式不统一，且维度对不上
 
-- **位置**：[validation-plan](./sadko-64m-validation-plan.md) §3.2/§3.3（"融合 L3+L5 KV"）· [v2-arch](./sadko-v2-architecture.md) §2 决策表（"L2/L3 + L4/L5"）· [v3-arch](./sadko-v3-architecture.md) §2（ELF 输入"完整 chunk 的 L3+L5 KV 64×768"）
+- **位置**：[validation-plan](./64m-validation-plan.md) §3.2/§3.3（"融合 L3+L5 KV"）· [v2-arch](./v2-architecture.md) §2 决策表（"L2/L3 + L4/L5"）· [v3-arch](./v3-architecture.md) §2（ELF 输入"完整 chunk 的 L3+L5 KV 64×768"）
 - **问题**：
   1. 层选择三个版本：L3+L5 / L2+L4（memory_write 代码取 anchor_layers[:2]）/ L2/L3+L4/L5；
   2. 单层 KV 每 chunk 展平维度为 64×(8 heads×48)=**64×384**。两层**均值池化**得 384 维，但 ELF `kv_input_dim=768` 与 MLP Compressor 输入 768 都对不上；只有**拼接**两层才得 768。
@@ -28,19 +28,19 @@
 
 ### A-03 🔴 Cross-Attention 读取范围：先 Top-64 检索 vs 全量注意力
 
-- **位置**：[validation-plan](./sadko-64m-validation-plan.md) §3.3（Top-K=64 chunks）· [v2-arch](./sadko-v2-architecture.md) §4.3（`CrossAttentionReadHead` 对 MemPool **全部 N 条**做注意力，无 Top-K 选择）· [v3-arch](./sadko-v3-architecture.md) §4.3（Router 返回 top_indices 但读取头未消费）
+- **位置**：[validation-plan](./64m-validation-plan.md) §3.3（Top-K=64 chunks）· [v2-arch](./v2-architecture.md) §4.3（`CrossAttentionReadHead` 对 MemPool **全部 N 条**做注意力，无 Top-K 选择）· [v3-arch](./v3-architecture.md) §4.3（Router 返回 top_indices 但读取头未消费）
 - **问题**：设计意图是"检索 Top-64 → CA 只读这 64 条"，但 v2 代码对全部存储（最多 1024 chunks）做注意力，检索环节被旁路。两者计算量与语义都不同。
 - **待裁决**：确认"Router 检索 → CA 仅读取选中 chunks"为唯一数据流，并修正 v2/v3 读取头接口（`forward(hidden, mem_k_topk, mem_v_topk)`）。
 
 ### A-04 🟡 Latent MoE 在 64M 验证范围内的缺失
 
-- **位置**：[whitepaper](./sadko-whitepaper.md) §2/§3.3（Latent MoE 为四大组件之一）vs 全部 64M 文档（dense 架构，无 MoE，四大实验也不覆盖路由）
+- **位置**：[whitepaper](./whitepaper.md) §2/§3.3（Latent MoE 为四大组件之一）vs 全部 64M 文档（dense 架构，无 MoE，四大实验也不覆盖路由）
 - **问题**：白皮书将 Latent MoE（语义流形路由）列为核心壁垒，但 64M 三阶段完全不验证它。若 64M《已验证机制清单》不含 Latent MoE，则 300M 引入时无证伪依据，违背"64M 清单是唯一宪法"的原则。
 - **待裁决**：(a) 明确 Latent MoE 推迟到 300M 并在白皮书中降级为"300M 待验证机制"；(b) 在 64M v3.0 增加第五个实验（Latent Router 原型）；(c) 承认 64M 清单只覆盖"记忆通路"，另立 300M 验证清单覆盖"路由通路"。
 
 ### A-05 🟡 "推理期零开销"的适用范围需要澄清
 
-- **位置**：[whitepaper](./sadko-whitepaper.md) §2/§3.5（"推理期零开销 Zero-Overhead"）vs [v2-arch](./sadko-v2-architecture.md)/[v3-arch](./sadko-v3-architecture.md)（推理时 CA 持续读取 MemPool + 新内容需 ELF 编码压缩）
+- **位置**：[whitepaper](./whitepaper.md) §2/§3.5（"推理期零开销 Zero-Overhead"）vs [v2-arch](./v2-architecture.md)/[v3-arch](./v3-architecture.md)（推理时 CA 持续读取 MemPool + 新内容需 ELF 编码压缩）
 - **问题**："零开销"仅指**扩散对齐的 Teacher 在推理时被丢弃**，但字面易被读为"右脑推理期免费"。实际推理期仍有：ELF 编码新内容、FSQ 量化、Router 检索、CA 读取的开销。
 - **待裁决**：在白皮书中将表述精确化为"对齐桥梁推理期零开销；右脑读写路径推理期开销为 O(N_mem) 常数级"，避免后续文档误引。
 
@@ -50,43 +50,43 @@
 
 ### B-01 🔴 Dual-Path FFN 参数量低估约 12 倍
 
-- **位置**：[validation-plan](./sadko-64m-validation-plan.md) §2.2（"总新增参数 ~1.2M"）· [v1-arch](./sadko-v1-architecture.md) §3（"新增 ~1.2M，总参数 ~65.2M"）
+- **位置**：[validation-plan](./64m-validation-plan.md) §2.2（"总新增参数 ~1.2M"）· [v1-arch](./v1-architecture.md) §3（"新增 ~1.2M，总参数 ~65.2M"）
 - **核算**：单个 SwiGLU FFN（768→2048→768）= 3×768×2048 ≈ **4.72M**。每个锚点层新增 reason_ffn（memory_ffn 继承原始权重不计新增）= +4.72M，3 个锚点层 = **+14.2M**；加门控网络（~0.45M）与 CA 骨架（~0.89M），v1.0 实际新增 ≈ **15.5M，总参数 ≈ 79.5M**，而非 65.2M。
 - **影响**："64M 小尺寸强约束"的论证基础、显存预算、以及与 MiniMind3 的 PPL 公平对比全部受影响。
 - **待修正/裁决**：(a) 接受 ~80M 总量并更新所有文档；(b) 将 reason 通路 intermediate_size 降为 512-1024（新增降至 ~4-6M）；(c) reason_ffn 与 memory_ffn 共享 down_proj。**此决策同时是 E-02 的开放讨论。**
 
 ### B-02 🔴 memory_embed(16) 被用于索引 256 个 FSQ 码字
 
-- **位置**：[v1-arch](./sadko-v1-architecture.md) §5.5（`memory_embed = Embedding(16, 768)`，语义标签用）· [v3-arch](./sadko-v3-architecture.md) §4.6/§5（`memory_kv = ar_student.memory_embed(codes)`，codes ∈ [0, 256)）
+- **位置**：[v1-arch](./v1-architecture.md) §5.5（`memory_embed = Embedding(16, 768)`，语义标签用）· [v3-arch](./v3-architecture.md) §4.6/§5（`memory_kv = ar_student.memory_embed(codes)`，codes ∈ [0, 256)）
 - **问题**：v3 直接用 v1 的 16 条目嵌入表索引 0-255 的 FSQ 码字，**越界**。且"语义标签嵌入"与"FSQ 码字→KV 嵌入"是两个不同功能，不应共用模块。
 - **待修正**：v3 新增独立 `code_embed = Embedding(256, 768)`（或 codes → codebook_embeddings → 投影到 768），并在 v1/v3 文档中区分两个模块。
 
 ### B-03 🔴 v2 memory_write 跨层池化的张量维度错误
 
-- **位置**：[v2-arch](./sadko-v2-architecture.md) §4.4
+- **位置**：[v2-arch](./v2-architecture.md) §4.4
 - **问题**：`k_layer.reshape(B, -1).mean(dim=0)` 得到的是 4×64×48=**12288 维**向量（且对 batch 维求均值），并非压缩机期望的 768 维。正确做法应是先对 chunk 内 token 维池化再按 head 拼接/投影：如 `k_layer.mean(dim=2).reshape(B, n_kv*head_dim)` → [B, 384]，两层拼接 → [B, 768]（与 A-02 联动）。
 - **待修正**：与 A-02 一并重写该函数的张量流。
 
 ### B-04 🔴 hot_window=4096 与 max_position_embeddings=4096 撞车
 
-- **位置**：[v1-arch](./sadko-v1-architecture.md) §2.1（max_position=4096）· [v2-arch](./sadko-v2-architecture.md) §3（hot_window=4096，训练 max_length=8192）
+- **位置**：[v1-arch](./v1-architecture.md) §2.1（max_position=4096）· [v2-arch](./v2-architecture.md) §3（hot_window=4096，训练 max_length=8192）
 - **问题**：v2.0 要在 8K-16K 序列上训练并验证"4096 之外的远程记忆"，但位置编码上限只有 4096——超长部分没有合法 position_id，RoPE 外推未做任何配置（NTK/YaRN 均未提及）。
 - **待修正**：v2 起将 max_position_embeddings 提至 16384 并明确 RoPE 外推方案；否则"远程记忆"实验在 64M 上根本无法构造。
 
 ### B-05 🟡 FSQ levels=[8,8,8,8] 与 codebook_size=256 不匹配
 
-- **位置**：[validation-plan](./sadko-64m-validation-plan.md) §4.2（levels=[8,8,8,8]，codebook=256）· [v3-arch](./sadko-v3-architecture.md) §3（主推 [8,8,8,8]，备选 [8,8,4]）
+- **位置**：[validation-plan](./64m-validation-plan.md) §4.2（levels=[8,8,8,8]，codebook=256）· [v3-arch](./v3-architecture.md) §3（主推 [8,8,8,8]，备选 [8,8,4]）
 - **问题**：[8,8,8,8] 组合空间为 4096，再 clamp 到 256 会浪费 94% 的组合结构且 clamp 制造大量同码冲突；[8,8,4] 恰好 =256 无浪费。两版并存但从未裁决。
 - **待裁决**：64M 统一为 **[8,8,4]**（或 codebook_size 改为 4096 并重新评估码本利用率目标）。
 
 ### B-06 🟡 "压缩比"三套数字三种口径
 
-- **位置**：[v2-arch](./sadko-v2-architecture.md) §2（"768/4，压缩比 4:1"，**维度压缩**）· [whitepaper](./sadko-whitepaper.md) §6.2（"300M 约 15:1，7B 后约 8:1"，口径未注明）· [graph-emergence](./sadko-elf-graph-emergence.md) §四（"L/M ≈ 32x"，**token 数压缩**）
+- **位置**：[v2-arch](./v2-architecture.md) §2（"768/4，压缩比 4:1"，**维度压缩**）· [whitepaper](./whitepaper.md) §6.2（"300M 约 15:1，7B 后约 8:1"，口径未注明）· [graph-emergence](./elf-graph-emergence.md) §四（"L/M ≈ 32x"，**token 数压缩**）
 - **待修正**：增加术语定义表，区分「维度压缩比（768→192 = 4:1）」「token 压缩比（L/M）」「存储压缩比（含 K/V 双份与层数）」，并回填白皮书的 15:1/8:1 口径。
 
 ### B-07 🟢 ELF 内部维度 192 vs 384
 
-- **位置**：[v3-arch](./sadko-v3-architecture.md) §3（yaml `encoder_dim: 192` vs dataclass `elf_hidden_size: 384`）
+- **位置**：[v3-arch](./v3-architecture.md) §3（yaml `encoder_dim: 192` vs dataclass `elf_hidden_size: 384`）
 - **待修正**：二选一（影响 ELF 参数量 ~5M 的核算与 input_proj 形状），建议 384（与早期设计一致，容量更足）。
 
 ### B-08 🟢 零散数值项
@@ -104,7 +104,7 @@
 
 ### C-01 🟡 实验 A「内容寻址」通过阈值：10% vs 20%
 
-- [validation-plan](./sadko-64m-validation-plan.md) §4.4 与 [v3-arch](./sadko-v3-architecture.md) §6 表格：通过 = 模糊 Recall 提升 **>20%**；[v3-arch](./sadko-v3-architecture.md) §6.1 代码：`passed = fuzzy_improvement > 0.10`。**同文档内代码与表格打架。**
+- [validation-plan](./64m-validation-plan.md) §4.4 与 [v3-arch](./v3-architecture.md) §6 表格：通过 = 模糊 Recall 提升 **>20%**；[v3-arch](./v3-architecture.md) §6.1 代码：`passed = fuzzy_improvement > 0.10`。**同文档内代码与表格打架。**
 - 待统一：建议 通过>20% / 证伪<10% / 中间为灰色区重调。
 
 ### C-02 🟡 实验 D「左脑校验」通过阈值：50% vs 70%，误杀 10% vs 20%
@@ -114,29 +114,29 @@
 
 ### C-03 🟡 Phase 3 vs Phase 3.5 命名与 EM 80% vs 95%
 
-- [validation-plan](./sadko-64m-validation-plan.md) §4.3 称机械对齐为 "Phase 3"（验收 EM>80%），§4.6 决策树却称 "Phase 3.5 基线 EM>95%"；[whitepaper](./sadko-whitepaper.md) §10 执行清单又称 "Phase 3.5-Rote 基线 EM>95% 后再开始右脑验证"（时序与 plan 相反）。
+- [validation-plan](./64m-validation-plan.md) §4.3 称机械对齐为 "Phase 3"（验收 EM>80%），§4.6 决策树却称 "Phase 3.5 基线 EM>95%"；[whitepaper](./whitepaper.md) §10 执行清单又称 "Phase 3.5-Rote 基线 EM>95% 后再开始右脑验证"（时序与 plan 相反）。
 - 待统一：建议「Phase 3 = FSQ 离散化；Phase 3.5 = 机械对齐；训练验收 EM>80%，实验启动基线 EM>95%（Rote 测试集）」，并修正白皮书执行清单的时序表述。
 
 ### C-04 🟡 Cross-Attention 骨架位置图示不一致
 
-- [validation-plan](./sadko-64m-validation-plan.md) §2.2 架构图把 CA 骨架画在**锚点层（L2/4/6）内部**；[v1-arch](./sadko-v1-architecture.md) §3 明确 `cross_attn_layers: [3, 5]`。
+- [validation-plan](./64m-validation-plan.md) §2.2 架构图把 CA 骨架画在**锚点层（L2/4/6）内部**；[v1-arch](./v1-architecture.md) §3 明确 `cross_attn_layers: [3, 5]`。
 - 待统一：以 **L3/L5** 为准（v2/v3 均按此实现），修正 validation-plan 架构图。
 
 ### C-05 🟡 Memory Embedding 形态：线性投影 vs 嵌入表
 
-- [validation-plan](./sadko-64m-validation-plan.md) §2.2（"Memory Embedding: 768→768 零初始化"）vs [v1-arch](./sadko-v1-architecture.md) §5.5（`Embedding(16, 768)` 语义标签表）。与 B-02 联动，待统一为：语义标签表（16×768）+ v3 独立码字嵌入（256×768）。
+- [validation-plan](./64m-validation-plan.md) §2.2（"Memory Embedding: 768→768 零初始化"）vs [v1-arch](./v1-architecture.md) §5.5（`Embedding(16, 768)` 语义标签表）。与 B-02 联动，待统一为：语义标签表（16×768）+ v3 独立码字嵌入（256×768）。
 
 ### C-06 🟢 v1.0 PPL 验收线 2.75 vs 2.80
 
-- [validation-plan](./sadko-64m-validation-plan.md) §2.5（≤2.75）vs [v1-arch](./sadko-v1-architecture.md) §8（≤2.75~2.80）与 §9 通过条件（≤2.80）。建议统一 ≤2.75，2.80 作为"延长训练"触发的灰色区。
+- [validation-plan](./64m-validation-plan.md) §2.5（≤2.75）vs [v1-arch](./v1-architecture.md) §8（≤2.75~2.80）与 §9 通过条件（≤2.80）。建议统一 ≤2.75，2.80 作为"延长训练"触发的灰色区。
 
 ### C-07 🟢 FSQ「量化维度」术语冲突
 
-- [v3-arch](./sadko-v3-architecture.md)：4 个标量量化维度（levels）vs [graph-emergence](./sadko-elf-graph-emergence.md) §1.3："量化维度 D ≈ log₂(N)+R，建议 64/128 起步"——两者说的不是同一个量（前者是 FSQ 标量数，后者像 latent 维/码本规模）。需统一术语并消除 64/128 与 256 码本的表面矛盾。
+- [v3-arch](./v3-architecture.md)：4 个标量量化维度（levels）vs [graph-emergence](./elf-graph-emergence.md) §1.3："量化维度 D ≈ log₂(N)+R，建议 64/128 起步"——两者说的不是同一个量（前者是 FSQ 标量数，后者像 latent 维/码本规模）。需统一术语并消除 64/128 与 256 码本的表面矛盾。
 
 ### C-08 🟢 whitepaper Scaling 表缺 64M 行
 
-- [whitepaper](./sadko-whitepaper.md) §6.1 演进表从 300M 起步，但 64M 已有确定配置（ELF 5M、FSQ 256、CA 标量门控 init=-2、全量 KL 之前的 Phase 对齐）。建议补一行 64M，使"64M→300M→1.5B→7B→70B"链条完整。
+- [whitepaper](./whitepaper.md) §6.1 演进表从 300M 起步，但 64M 已有确定配置（ELF 5M、FSQ 256、CA 标量门控 init=-2、全量 KL 之前的 Phase 对齐）。建议补一行 64M，使"64M→300M→1.5B→7B→70B"链条完整。
 
 ---
 

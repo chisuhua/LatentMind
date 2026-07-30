@@ -1,8 +1,8 @@
 # SADKO-Native-64M v1.0 架构设计：基座适配层（左脑改造）
 
 > **一句话定位**：v1.0 施工图纸——在 MiniMind3 64M 上完成 Split-GQA + 异构 RoPE + Dual-Path FFN + Cross-Attention 骨架预埋，确保 PPL 不退化
-> **上游文档**：[sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) §2（验证计划中的 v1.0 定位）
-> **下游文档**：[sadko-v2-architecture.md](./sadko-v2-architecture.md)
+> **上游文档**：[64m-validation-plan.md](./64m-validation-plan.md) §2（验证计划中的 v1.0 定位）
+> **下游文档**：[v2-architecture.md](./v2-architecture.md)
 > **最后更新**：2026-07-29
 
 ---

@@ -1,7 +1,7 @@
 # SADKO 右脑图结构涌现机制：促生长与证生长
 
 > **一句话定位**：右脑（ELF）latent space 中图拓扑如何"生长"出来（训练策略）以及如何证明它长出来了（图论分析工具箱）
-> **关联文档**：[sadko-elf-vs-gdm-review.md](./sadko-elf-vs-gdm-review.md)（为什么放弃显式 GDM）· [sadko-elf-phase0-manual.md](./sadko-elf-phase0-manual.md)（Phase 0 验证执行）
+> **关联文档**：[elf-vs-gdm-review.md](./elf-vs-gdm-review.md)（为什么放弃显式 GDM）· [elf-phase0-manual.md](./elf-phase0-manual.md)（Phase 0 验证执行）
 > **最后更新**：2026-07-29
 
 ---

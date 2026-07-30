@@ -1,7 +1,7 @@
 # SADKO-Native-64M v3.0 架构设计：灵魂注入层（完整机制验证）
 
 > **一句话定位**：v3.0 施工图纸——替换 MLP 压缩器为 ELF-Lite（Flow Matching）、引入 FSQ 离散化与内容寻址、执行扩散对齐与四大核心实验，产出《已验证/已证伪机制清单》
-> **上游文档**：[sadko-v2-architecture.md](./sadko-v2-architecture.md)（v2.0 管线）· [sadko-whitepaper.md](./sadko-whitepaper.md) §4（四大实验理论依据）
+> **上游文档**：[v2-architecture.md](./v2-architecture.md)（v2.0 管线）· [whitepaper.md](./whitepaper.md) §4（四大实验理论依据）
 > **最后更新**：2026-07-29
 
 ---
@@ -68,7 +68,7 @@ SADKO-Native-64M v3.0 (全架构)
     ├── 新增实验 E 简化 MoE (2 experts × 锚点层 3): +9.4M
     └── 净增: ~14.0M → 总参数 ~93M
     注：v1.0 已含 Dual-Path FFN 改造（基座 64M + ~15.5M = ~80M），
-       见 v1-arch §3 与 sadko-open-issues.md B-01
+       见 v1-arch §3 与 open-issues.md B-01
 ```
 
 ---

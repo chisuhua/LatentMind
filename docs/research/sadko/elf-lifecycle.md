@@ -1,7 +1,7 @@
 # SADKO 右脑生命周期管理：持续生长、结构化遗忘与系统存活条件
 
 > **一句话定位**：右脑作为"活体认知系统"的运维框架——如何持续吸收新知识而不灾难性遗忘（稳态可塑性）、如何替代过时的图结构（受控自噬）、以及系统存活的六维检查清单
-> **关联文档**：[sadko-elf-graph-emergence.md](./sadko-elf-graph-emergence.md)（自组装范式）· [sadko-elf-phase0-manual.md](./sadko-elf-phase0-manual.md)（Phase 0 基线）
+> **关联文档**：[elf-graph-emergence.md](./elf-graph-emergence.md)（自组装范式）· [elf-phase0-manual.md](./elf-phase0-manual.md)（Phase 0 基线）
 > **最后更新**：2026-07-29
 
 在分子生物学中，这对应**细胞稳态（Homeostasis）、受控生长、细胞自噬（Autophagy）与突触修剪（Synaptic Pruning）**的平衡。生长信号过强 → 癌变（模型崩溃/灾难性遗忘）；稳态机制过强 → 衰老停滞（无法吸收新知识）。SADKO 右脑的持续生长不能靠"无限微调"，必须建立**结构化的增量自组装协议**。

@@ -1,7 +1,7 @@
 # SADKO 多模态原生设计（Multimodal Manifold Native）— 2026-07-29 增补
 
 > **一句话定位**：从第一性原理论证 SADKO 的右脑架构（双向注意力 + Flow Matching + FSQ）**天然是为连续流形（图像/视频/音频/3D）设计的**，不是文本架构的事后扩展。
-> **性质**：SADKO 白皮书（[sadko-whitepaper.md](./sadko-whitepaper.md)）的 §1.4 增补论证文档
+> **性质**：SADKO 白皮书（[whitepaper.md](./whitepaper.md)）的 §1.4 增补论证文档
 > **最后更新**：2026-07-29
 > **触发事件**：LatentMind 双轨分工战略讨论（见 [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策)）
 
@@ -9,7 +9,7 @@
 
 ## 0. 为什么这份文档存在
 
-在 2026-07-29 之前的 SADKO 文档中（[sadko-whitepaper.md](./sadko-whitepaper.md)、[sadko-v1/v2/v3-architecture.md](./sadko-v1-architecture.md)），所有架构设计都基于**文本场景**（MiniMind3 64M + BPE vocab=6400）。这导致一个误解："SADKO 是文本认知备选"。
+在 2026-07-29 之前的 SADKO 文档中（[whitepaper.md](./whitepaper.md)、[v1/v2/v3-architecture.md](./v1-architecture.md)），所有架构设计都基于**文本场景**（MiniMind3 64M + BPE vocab=6400）。这导致一个误解："SADKO 是文本认知备选"。
 
 **事实**：SADKO 的设计动机**从一开始就是连续流形**。只是因为 64M 验证阶段选择了 MiniMind3（文本基座），才把第一版落地在文本上。
 
@@ -207,7 +207,7 @@
 
 ### 6.1 64M 阶段（当前）
 
-**MiniMind3 64M 文本基座**（见 [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md)）：
+**MiniMind3 64M 文本基座**（见 [64m-validation-plan.md](./64m-validation-plan.md)）：
 - v1.0：左脑改造（Split-GQA + 异构 RoPE + Dual-Path FFN）
 - v2.0：MemPool 压缩-读取管线
 - v3.0：ELF-Lite + FSQ + 扩散对齐 + 四大实验
@@ -218,7 +218,7 @@
 
 **300M 双脑融合**：
 - 文本基座 → 多模态扩展（图像 + 文本）
-- 验证 70/20/10 黄金比例（KV 输入比例，见 [sadko-elf-graph-emergence.md §4](./sadko-elf-graph-emergence.md)）
+- 验证 70/20/10 黄金比例（KV 输入比例，见 [elf-graph-emergence.md §4](./elf-graph-emergence.md)）
 - 验证 FSQ 码字的跨模态对齐（图像"猫" + 文本"cat" → 同一码字）
 
 **关键实验**：
@@ -254,10 +254,10 @@
 
 | 文档 | 关系 |
 |------|------|
-| [sadko-whitepaper.md](./sadko-whitepaper.md) | 主白皮书，§1.4 是本文档的精简版 |
-| [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) | 64M 验证计划（本文档 §6.1 引用）|
-| [sadko-elf-vs-gdm-review.md](./sadko-elf-vs-gdm-review.md) | 双向 + FM vs 图扩散的六维裁决 |
-| [sadko-elf-graph-emergence.md](./sadko-elf-graph-emergence.md) | 图结构涌现机制（FSQ 码字 → 知识图谱）|
+| [whitepaper.md](./whitepaper.md) | 主白皮书，§1.4 是本文档的精简版 |
+| [64m-validation-plan.md](./64m-validation-plan.md) | 64M 验证计划（本文档 §6.1 引用）|
+| [elf-vs-gdm-review.md](./elf-vs-gdm-review.md) | 双向 + FM vs 图扩散的六维裁决 |
+| [elf-graph-emergence.md](./elf-graph-emergence.md) | 图结构涌现机制（FSQ 码字 → 知识图谱）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 | [../references/loopcoder-v2.md](../references/loopcoder-v2.md) | 触发本文档的关键论文 |
 

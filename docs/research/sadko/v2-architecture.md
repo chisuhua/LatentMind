@@ -1,8 +1,8 @@
 # SADKO-Native-64M v2.0 架构设计：记忆压缩层（潜空间读写验证）
 
 > **一句话定位**：v2.0 施工图纸——激活 Cross-Attention 并接入 Shared MemPool（MLP 压缩器），验证"远程 KV 压缩到 192 维潜空间并正确读取"的物理可行性
-> **上游文档**：[sadko-v1-architecture.md](./sadko-v1-architecture.md)（v1.0 基座）· [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) §3
-> **下游文档**：[sadko-v3-architecture.md](./sadko-v3-architecture.md)
+> **上游文档**：[v1-architecture.md](./v1-architecture.md)（v1.0 基座）· [64m-validation-plan.md](./64m-validation-plan.md) §3
+> **下游文档**：[v3-architecture.md](./v3-architecture.md)
 > **最后更新**：2026-07-29
 
 ---

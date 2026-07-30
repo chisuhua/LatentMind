@@ -1,7 +1,7 @@
 # SADKO 右脑 vs GDM-v1.2：架构裁决与修订方案
 
 > **一句话定位**：右脑技术路线的决策记录——为什么 Flow Matching + 双向注意力全面优于 Graph Diffusion，以及放弃显式 GDM 后的修订方案
-> **关联文档**：[sadko-whitepaper.md](./sadko-whitepaper.md) §2.1（右脑 ELF 定位）· [sadko-elf-graph-emergence.md](./sadko-elf-graph-emergence.md)（图结构涌现机制）
+> **关联文档**：[whitepaper.md](./whitepaper.md) §2.1（右脑 ELF 定位）· [elf-graph-emergence.md](./elf-graph-emergence.md)（图结构涌现机制）
 > **最后更新**：2026-07-29
 
 ---

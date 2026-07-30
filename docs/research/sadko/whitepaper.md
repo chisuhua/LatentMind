@@ -48,9 +48,9 @@ SADKO 彻底摒弃了"单脑均匀膨胀"的传统范式，确立了三大底层
 
 **与主线融合的接口**：SADKO 训练后冻结的 ELF Memory KV，通过 **Cross-Attention** 喂给主线 HRM 的中间层——"**HRM 是大脑皮层，ELF 是海马体**"。
 
-**配套前置研究**：主线应先做 K-sweep 实验验证 HRM 的循环深度假设（见 [RDD-0001](../rfcs/RDD-0001-k-sweep-experiment.md)），SADKO 应先做 64M 四大机制实验（见 [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md)），避免在两条路线均未完成小规模验证前过早锁定。
+**配套前置研究**：主线应先做 K-sweep 实验验证 HRM 的循环深度假设（见 [RDD-0001](../rfcs/RDD-0001-k-sweep-experiment.md)），SADKO 应先做 64M 四大机制实验（见 [64m-validation-plan.md](./64m-validation-plan.md)），避免在两条路线均未完成小规模验证前过早锁定。
 
-详细论证见 [sadko-multimodal-native.md](./sadko-multimodal-native.md)（2026-07-29 增补）。
+详细论证见 [multimodal-native.md](./multimodal-native.md)（2026-07-29 增补）。
 
 ---
 
@@ -100,7 +100,7 @@ SADKO-Native 采用"异构双脑 + 扩散桥梁"的三层拓扑结构。
 
 以下 6 个创新点是 SADKO 区别于现有 LLM/RAG 架构的核心壁垒：
 
-> 📌 **设计哲学增补（2026-07-29 增补 §1.4）**：SADKO 的右脑（双向 + Flow Matching + FSQ）**从第一性原理上就是为多模态流形设计的**——不是事后扩展，而是设计动机本身。本节（§三）所述创新点同样适用于多模态场景，详细论证见 [sadko-multimodal-native.md](./sadko-multimodal-native.md)。
+> 📌 **设计哲学增补（2026-07-29 增补 §1.4）**：SADKO 的右脑（双向 + Flow Matching + FSQ）**从第一性原理上就是为多模态流形设计的**——不是事后扩展，而是设计动机本身。本节（§三）所述创新点同样适用于多模态场景，详细论证见 [multimodal-native.md](./multimodal-native.md)。
 
 ### 1. 流形锚点与模糊联想 (FSQ + Slerp 插值)
 
