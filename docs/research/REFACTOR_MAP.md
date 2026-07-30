@@ -167,3 +167,7 @@ docs/superpowers/specs/2026-07-30-elf-research-line-design.md:127:4. 在 git com
 docs/superpowers/specs/2026-07-30-elf-research-line-design.md:129:### 1.4 顶级 `docs/research/README.md` 重写
 docs/superpowers/specs/2026-07-30-elf-research-line-design.md:403:1. **子目录中 README.md 的具体内容**：每个子目录的 README 需要把原 docs/research/README.md §3.1/§3.2/§3.3 的对应部分迁移过来——具体哪些内容放 README、哪些放子文件待定
 docs/superpowers/specs/2026-07-30-elf-research-line-design.md:44:docs/research/
+
+## 验证完成
+
+2026-07-30 验证完成：所有跨文档引用已更新为新子目录路径。
