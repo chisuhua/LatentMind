@@ -23,7 +23,7 @@ LatentMind 项目采用**双轨制**：Logos（主线）+ SADKO（探索分支�
 | **目标硬件** | ChipForge APU 端侧 | 服务器训练 + 端侧 KV 缓存 |
 | **哲学隐喻** | 大脑皮层（理性思考）| 海马体（流形记忆）|
 
-**详细分工论证**：见 [sadko-multimodal-native.md](./sadko-multimodal-native.md)。
+**详细分工论证**：见 [sadko-multimodal-native.md](../sadko/multimodal-native.md)。
 
 **融合接口**：SADKO 训练后冻结的 ELF Memory KV 通过 **Cross-Attention** 喂给 Logos 主线 H 模块的中间层（"HRM 是大脑皮层，ELF 是海马体"）。
 
@@ -189,7 +189,7 @@ Logos 与 SADKO 的关系：**互补 + 融合**，非竞争。
 | 长期记忆 | 压缩、解压对称 | 双向 + FM | **SADKO** |
 | 知识库 | 离散索引、检索 | FSQ 离散 | **SADKO** |
 
-详细论证见 [sadko-multimodal-native.md §1](./sadko-multimodal-native.md#1-第一性原理连续-vs-离散的数学偏置)。
+详细论证见 [sadko-multimodal-native.md §1](../sadko/multimodal-native.md#1-第一性原理连续-vs-离散的数学偏置)。
 
 ### 3.2 融合接口（远期）
 
@@ -396,8 +396,8 @@ Logos 从 64M 起点到 1.5B 完整方案的演进（**每级独立训练，从�
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | K 值策略关键论文 |
 | [docs/references/huginn.md](../references/huginn.md) | 反例：循环可 K=50 |
 | [docs/references/stars.md](../references/stars.md) | 崩溃修复方案 |
-| [docs/research/sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 探索分支白皮书（互补关系）|
-| [docs/research/sadko-multimodal-native.md](./sadko-multimodal-native.md) | 双轨分工的第一性原理论证 |
+| [docs/research/sadko/whitepaper.md](../sadko/whitepaper.md) | SADKO 探索分支白皮书（互补关系）|
+| [docs/research/sadko/multimodal-native.md](../sadko/multimodal-native.md) | 双轨分工的第一性原理论证 |
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 研究路线分工战略 |
 
 ---

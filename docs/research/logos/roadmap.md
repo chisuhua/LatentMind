@@ -334,8 +334,8 @@
 | [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比 |
 | [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略 |
 | [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行 |
-| [docs/research/sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) | SADKO 64M 验证计划（并行）|
-| [docs/research/sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 白皮书（双轨协同）|
+| [docs/research/sadko/64m-validation-plan.md](../sadko/64m-validation-plan.md) | SADKO 64M 验证计划（并行）|
+| [docs/research/sadko/whitepaper.md](../sadko/whitepaper.md) | SADKO 白皮书（双轨协同）|
 
 ---
 

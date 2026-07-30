@@ -12,7 +12,7 @@
 
 > 📌 **2026-07-29 v1.5 新增**：SADKO 64M 训练**也依赖** Phase 0 共享前置验证——这是双轨协调的关键发现。
 >
-> 详见双轨协调文档：[logos-sadko-64m-coordination.md §2](./logos-sadko-64m-coordination.md#2-phase-0共享前置验证-5-周)
+> 详见双轨协调文档：[logos-sadko-64m-coordination.md §2](../logos/sadko-64m-coordination.md#2-phase-0共享前置验证-5-周)
 >
 > ⚠️ **关键提示**：Phase 0 不通过，禁止启动 SADKO 64M v1.0 / v2.0 / v3.0 的任何架构改造实验。
 
@@ -69,7 +69,7 @@ Phase 0 是 SADKO 64M v1.0 / v2.0 / v3.0 的**前置许可证**。
 
 > 📌 **2026-07-29 v1.5 新增**：SADKO 64M 训练完成后，需在统一评估框架下与 Logos 对比。
 
-详见 [logos-sadko-64m-coordination.md §4](./logos-sadko-64m-coordination.md#4-phase-2交叉验证-2-周month-5-末)。
+详见 [logos-sadko-64m-coordination.md §4](../logos/sadko-64m-coordination.md#4-phase-2交叉验证-2-周month-5-末)。
 
 **六类对比任务与 SADKO 预期表现**：
 

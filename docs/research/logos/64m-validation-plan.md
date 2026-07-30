@@ -414,8 +414,8 @@ Week 10+:   交付《Logos 64M 验证报告》
 | [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比详细施工图 |
 | [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略详细施工图 |
 | [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行详细施工图 |
-| [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) | SADKO 64M 验证计划（并行路线）|
-| [docs/research/sadko-v1-architecture.md](./sadko-v1-architecture.md) | SADKO Split-GQA 详细实现（v1.0 A.2 借鉴）|
+| [sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md) | SADKO 64M 验证计划（并行路线）|
+| [docs/research/sadko/v1-architecture.md](../sadko/v1-architecture.md) | SADKO Split-GQA 详细实现（v1.0 A.2 借鉴）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 
 ---

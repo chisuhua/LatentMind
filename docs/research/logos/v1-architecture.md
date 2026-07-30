@@ -107,7 +107,7 @@ Logos-HRM-64M v1.0 A.2（Split-GQA 风格）：
 └── 完全从零训练
 ```
 
-**详细实现**（借鉴 SADKO [sadko-v1-architecture.md §5](./sadko-v1-architecture.md)）：
+**详细实现**（借鉴 SADKO [sadko-v1-architecture.md §5](../sadko/v1-architecture.md)）：
 
 ```python
 class SplitGQAAttention(nn.Module):
@@ -380,9 +380,9 @@ class LogosMixedModel(nn.Module):
 
 | SADKO 实现 | Logos 借鉴方式 |
 |-----------|------------|
-| [sadko-v1-architecture.md §5 SplitGQAAttention](./sadko-v1-architecture.md) | 直接借鉴，作为 A.2/A.3 的基础组件 |
-| [sadko-v1-architecture.md §5 DualPathFFN](./sadko-v1-architecture.md) | H/L block 内的 FFN 可借鉴 |
-| [sadko-v1-architecture.md §6 权重初始化](./sadko-v1-architecture.md) | 仅参考结构，**不复用权重** |
+| [sadko-v1-architecture.md §5 SplitGQAAttention](../sadko/v1-architecture.md) | 直接借鉴，作为 A.2/A.3 的基础组件 |
+| [sadko-v1-architecture.md §5 DualPathFFN](../sadko/v1-architecture.md) | H/L block 内的 FFN 可借鉴 |
+| [sadko-v1-architecture.md §6 权重初始化](../sadko/v1-architecture.md) | 仅参考结构，**不复用权重** |
 
 ---
 
@@ -492,7 +492,7 @@ v1.0 完成后，最优架构（A.3 期望）作为 v2.0 的基座：
 | 文档 | 关系 |
 |------|------|
 | [64m-validation-plan.md §3](./64m-validation-plan.md#3-v10双时间尺度对比基座改造) | 本文档的父级 |
-| [sadko-v1-architecture.md](./sadko-v1-architecture.md) | SADKO Split-GQA 详细实现（本文档 A.2/A.3 借鉴）|
+| [sadko-v1-architecture.md](../sadko/v1-architecture.md) | SADKO Split-GQA 详细实现（本文档 A.2/A.3 借鉴）|
 | [whitepaper.md §2.2](./whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m) | H/L block 的高层架构 |
 | [k-strategy.md](./k-strategy.md) | K 值策略（v2.0 详细论证）|
 | [docs/research/hrm-text.md](../references/hrm-text.md) | HRM-Text 原论文笔记（仅参考） |

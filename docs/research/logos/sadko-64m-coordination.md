@@ -5,7 +5,7 @@
 > **最后更新**：2026-07-29（v1.0 新增）
 > **关联**：
 > - Logos 64M 验证：[64m-validation-plan.md](./64m-validation-plan.md)
-> - SADKO 64M 验证：[sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md)
+> - SADKO 64M 验证：[sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md)
 
 ---
 
@@ -257,7 +257,7 @@ Phase 0 全部 P.0.1 - P.0.6 验收通过后，**两条路线同时启动**。
 
 ### 3.3 SADKO 64M（Phase 1B）
 
-详见 [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md)：
+详见 [sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md)：
 - v1.0：基座适配（Split-GQA + 异构 RoPE + Dual-Path FFN + CA 骨架）
 - v2.0：记忆压缩（Shared MemPool + 192 维 + 压缩触发器）
 - v3.0：灵魂注入（ELF-Lite + FSQ + 扩散对齐 + 四大实验）
@@ -427,9 +427,9 @@ Phase 2 结果 → 决策
 | 文档 | 关系 |
 |------|------|
 | [64m-validation-plan.md §0](./64m-validation-plan.md) | Logos 64M 验证（引用本协调文档）|
-| [sadko-64m-validation-plan.md §0](./sadko-64m-validation-plan.md) | SADKO 64M 验证（引用本协调文档）|
+| [sadko-64m-validation-plan.md §0](../sadko/64m-validation-plan.md) | SADKO 64M 验证（引用本协调文档）|
 | [whitepaper.md §2](./whitepaper.md) | Logos 主线架构 |
-| [sadko-whitepaper.md §2](./sadko-whitepaper.md) | SADKO 主线架构 |
+| [sadko-whitepaper.md §2](../sadko/whitepaper.md) | SADKO 主线架构 |
 | [roadmap.md §5](./roadmap.md) | Logos 路线图（含双轨协同）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 
