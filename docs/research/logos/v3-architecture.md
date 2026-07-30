@@ -1,7 +1,7 @@
 # Logos-Native-64M v3.0 架构设计：多轨迹并行决策
 
 > **一句话定位**：在 v2.0 推荐循环策略上集成多轨迹并行决策——借助 Radix Cache 多路径并行，让 N 条路径在端侧预算内完成（**不集成 GRAM**，独立实现）。
-> **上游文档**：[logos-64m-validation-plan.md §5](./logos-64m-validation-plan.md#5-v30多轨迹并行决策)
+> **上游文档**：[64m-validation-plan.md §5](./64m-validation-plan.md#5-v30多轨迹并行决策)
 > **下游文档**：交付《Logos 64M 验证报告》→ 启动 Logos 300M 训练
 > **最后更新**：2026-07-29（v1.2：去除 GR AM 集成，明确独立实现多轨迹）
 
@@ -21,7 +21,7 @@
 
 **多轨迹并行决策能否在端侧预算内完成？**
 
-**核心论证**：详见 [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-b多轨迹并行推理端侧化关键)（多轨迹并行推理）。
+**核心论证**：详见 [whitepaper.md §2.3](./whitepaper.md#23-模块-b多轨迹并行推理端侧化关键)（多轨迹并行推理）。
 
 **三种候选实现**：
 
@@ -322,11 +322,11 @@ training_config = {
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §5](./logos-64m-validation-plan.md#5-v30多轨迹并行决策) | 本文档的父级 |
-| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比（v3.0 基座）|
-| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略（v3.0 推荐组合来源）|
-| [logos-whitepaper.md §2.3](./logos-whitepaper.md#23-模块-b多轨迹并行推理端侧化关键) | 多轨迹并行高层架构 |
-| [logos-k-strategy.md §2.3](./logos-k-strategy.md#23-radix-cache-多路径并行) | Radix Cache 详细论证 |
+| [64m-validation-plan.md §5](./64m-validation-plan.md#5-v30多轨迹并行决策) | 本文档的父级 |
+| [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比（v3.0 基座）|
+| [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略（v3.0 推荐组合来源）|
+| [whitepaper.md §2.3](./whitepaper.md#23-模块-b多轨迹并行推理端侧化关键) | 多轨迹并行高层架构 |
+| [k-strategy.md §2.3](./k-strategy.md#23-radix-cache-多路径并行) | Radix Cache 详细论证 |
 | [docs/references/gram.md](../references/gram.md) | GRAM 原论文笔记（仅参考）|
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | PLT 架构（Radix Cache 借鉴）|
 

@@ -3,8 +3,8 @@
 > **一句话定位**：Logos 主线的 64M 起点——从 MiniMind3 64M Dense 基座改造为 Logos H/L 全新架构，**完全从零训练**，验证三大核心机制（双时间尺度、Per-Token 早退、多轨迹并行）。
 > **性质**：Logos 主线 **v1.0 起点**的关键验证计划
 > **最后更新**：2026-07-29（v1.2：调整为"起点"定位，明确"从零训练"）
-> **上游文档**：[logos-whitepaper.md](./logos-whitepaper.md)（架构设计）
-> **下游文档**：[logos-v1-architecture.md](./logos-v1-architecture.md) / [logos-v2-architecture.md](./logos-v2-architecture.md) / [logos-v3-architecture.md](./logos-v3-architecture.md)
+> **上游文档**：[whitepaper.md](./whitepaper.md)（架构设计）
+> **下游文档**：[v1-architecture.md](./v1-architecture.md) / [v2-architecture.md](./v2-architecture.md) / [v3-architecture.md](./v3-architecture.md)
 
 ---
 
@@ -108,7 +108,7 @@ Phase 0 是 v1.0 的**前置许可证**——Phase 0 不通过，禁止启动 v1
 | **核心命题** | AR + ELF 异构双脑能否 work？| HRM 分层循环能否在端侧预算内 work？|
 | **任务聚焦** | 文本重建 + 码字检索（记忆）| 推理任务 + 决策任务 |
 
-**关键相似**：两者**都借鉴 Split-GQA + 异构 RoPE**——这是 SADKO 和 HRM 在数学上**独立发现**的同一洞察（双时间尺度），Logos 应主动借鉴。详细同构分析见 [logos-whitepaper.md §2.2](./logos-whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m)。
+**关键相似**：两者**都借鉴 Split-GQA + 异构 RoPE**——这是 SADKO 和 HRM 在数学上**独立发现**的同一洞察（双时间尺度），Logos 应主动借鉴。详细同构分析见 [whitepaper.md §2.2](./whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m)。
 
 ---
 
@@ -408,12 +408,12 @@ Week 10+:   交付《Logos 64M 验证报告》
 
 | 文档 | 关系 |
 |------|------|
-| [logos-whitepaper.md](./logos-whitepaper.md) | Logos 主线架构白皮书（本文档的父级）|
-| [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略（多种并行化策略详细论证）|
-| [logos-roadmap.md](./logos-roadmap.md) | Logos 主线路线图（本文档是路线图的 +0 至 +2.5 月详细展开）|
-| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比详细施工图 |
-| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略详细施工图 |
-| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 多轨迹并行详细施工图 |
+| [whitepaper.md](./whitepaper.md) | Logos 主线架构白皮书（本文档的父级）|
+| [k-strategy.md](./k-strategy.md) | K 值策略（多种并行化策略详细论证）|
+| [roadmap.md](./roadmap.md) | Logos 主线路线图（本文档是路线图的 +0 至 +2.5 月详细展开）|
+| [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比详细施工图 |
+| [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略详细施工图 |
+| [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行详细施工图 |
 | [sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) | SADKO 64M 验证计划（并行路线）|
 | [docs/research/sadko-v1-architecture.md](./sadko-v1-architecture.md) | SADKO Split-GQA 详细实现（v1.0 A.2 借鉴）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |

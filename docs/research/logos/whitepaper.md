@@ -76,7 +76,7 @@ Logos 确立三大底层哲学基石：
 | **KV 缓存** | 端侧 INT8 | 减少带宽 |
 | **并行化策略** | PLT / Radix Cache / 层次化 | 突破 K 端侧限制 |
 
-**关键论证**：详见 [logos-k-strategy.md](./logos-k-strategy.md)。
+**关键论证**：详见 [k-strategy.md](./k-strategy.md)。
 
 ---
 
@@ -283,7 +283,7 @@ ChipForge APU
 | 实时对话 | <100ms | ✅ 100ms | ❌ 400ms |
 | 离线规划 | <500ms | ✅ | ✅ |
 
-**关键约束**：K>4 串行循环在端侧实际价值≈0（K=8 不可用）。需要用 PLT / Radix Cache / 层次化等并行化策略突破 K 限制（详见 [logos-k-strategy.md](./logos-k-strategy.md)）。**具体 K 值由 64M 验证决定，不是预先固定**。
+**关键约束**：K>4 串行循环在端侧实际价值≈0（K=8 不可用）。需要用 PLT / Radix Cache / 层次化等并行化策略突破 K 限制（详见 [k-strategy.md](./k-strategy.md)）。**具体 K 值由 64M 验证决定，不是预先固定**。
 
 ---
 
@@ -333,7 +333,7 @@ Logos 从 64M 起点到 1.5B 完整方案的演进（**每级独立训练，从�
 - 决定 300M 的具体架构细节
 - 推荐 K 值范围（不是固定值）
 
-**详细计划**：[logos-64m-validation-plan.md](./logos-64m-validation-plan.md)
+**详细计划**：[64m-validation-plan.md](./64m-validation-plan.md)
 
 ### 7.2 阶段二：300M 规模验证（+3 至 +4 月）
 
@@ -363,7 +363,7 @@ Logos 从 64M 起点到 1.5B 完整方案的演进（**每级独立训练，从�
 - SADKO 1.5B：服务器训练 + 端侧 KV 缓存（INT8）
 - Cross-Attention 融合接口
 
-**详细路线图**：[logos-roadmap.md](./logos-roadmap.md)
+**详细路线图**：[roadmap.md](./roadmap.md)
 
 ---
 
@@ -385,12 +385,12 @@ Logos 从 64M 起点到 1.5B 完整方案的演进（**每级独立训练，从�
 | 文档 | 关系 |
 |------|------|
 | [docs/architecture.md](../architecture.md) | 高层项目概览（已存在），Logos 是其详细技术展开 |
-| [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略与端侧可行性 |
-| [logos-roadmap.md](./logos-roadmap.md) | 详细路线图与决策时间表 |
-| [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) | 64M 起点验证计划 |
-| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比施工图 |
-| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略详细 |
-| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 多轨迹并行详细 |
+| [k-strategy.md](./k-strategy.md) | K 值策略与端侧可行性 |
+| [roadmap.md](./roadmap.md) | 详细路线图与决策时间表 |
+| [64m-validation-plan.md](./64m-validation-plan.md) | 64M 起点验证计划 |
+| [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比施工图 |
+| [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略详细 |
+| [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行详细 |
 | [docs/references/hrm-text.md](../references/hrm-text.md) | HRM-Text 论文笔记（仅作架构参考，不集成权重）|
 | [docs/references/gram.md](../references/gram.md) | GRAM 论文笔记（仅作架构参考，不集成）|
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | K 值策略关键论文 |

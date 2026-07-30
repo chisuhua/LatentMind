@@ -224,7 +224,7 @@ def per_token_early_exit(x, max_K=8, epsilon=1e-4):
 - v2.0：循环策略对比（串行 vs PLT vs 早退 vs Radix vs 层次化）
 - v3.0：多轨迹并行决策（不集成 GRAM，独立实现）
 
-详细见 [logos-64m-validation-plan.md](./logos-64m-validation-plan.md)。
+详细见 [64m-validation-plan.md](./64m-validation-plan.md)。
 
 ---
 
@@ -243,11 +243,11 @@ def per_token_early_exit(x, max_K=8, epsilon=1e-4):
 
 | 文档 | 关系 |
 |------|------|
-| [logos-whitepaper.md](./logos-whitepaper.md) | Logos 主线白皮书（本文档的父级）|
-| [logos-roadmap.md](./logos-roadmap.md) | 详细路线图 |
-| [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) | 64M 验证计划 |
-| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略详细 |
-| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 多轨迹并行详细 |
+| [whitepaper.md](./whitepaper.md) | Logos 主线白皮书（本文档的父级）|
+| [roadmap.md](./roadmap.md) | 详细路线图 |
+| [64m-validation-plan.md](./64m-validation-plan.md) | 64M 验证计划 |
+| [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略详细 |
+| [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行详细 |
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | PLT 架构 |
 | [docs/references/per-token-convergence.md](../references/per-token-convergence.md) | 早退证据 |
 | [docs/references/stars.md](../references/stars.md) | 崩溃修复 |

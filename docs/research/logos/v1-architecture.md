@@ -1,8 +1,8 @@
 # Logos-Native-64M v1.0 架构设计：双时间尺度对比
 
 > **一句话定位**：在 MiniMind3 64M Dense 基座上对比四种"双时间尺度"实现方案，**完全从零训练**，找出 Logos 主线的最优基座架构。
-> **上游文档**：[logos-64m-validation-plan.md §3](./logos-64m-validation-plan.md#3-v10双时间尺度对比基座改造)
-> **下游文档**：[logos-v2-architecture.md](./logos-v2-architecture.md)（基于 v1.0 推荐的基座）
+> **上游文档**：[64m-validation-plan.md §3](./64m-validation-plan.md#3-v10双时间尺度对比基座改造)
+> **下游文档**：[v2-architecture.md](./v2-architecture.md)（基于 v1.0 推荐的基座）
 > **最后更新**：2026-07-29（v1.2：明确"完全从零训练"）
 
 ---
@@ -491,10 +491,10 @@ v1.0 完成后，最优架构（A.3 期望）作为 v2.0 的基座：
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §3](./logos-64m-validation-plan.md#3-v10双时间尺度对比基座改造) | 本文档的父级 |
+| [64m-validation-plan.md §3](./64m-validation-plan.md#3-v10双时间尺度对比基座改造) | 本文档的父级 |
 | [sadko-v1-architecture.md](./sadko-v1-architecture.md) | SADKO Split-GQA 详细实现（本文档 A.2/A.3 借鉴）|
-| [logos-whitepaper.md §2.2](./logos-whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m) | H/L block 的高层架构 |
-| [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略（v2.0 详细论证）|
+| [whitepaper.md §2.2](./whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m) | H/L block 的高层架构 |
+| [k-strategy.md](./k-strategy.md) | K 值策略（v2.0 详细论证）|
 | [docs/research/hrm-text.md](../references/hrm-text.md) | HRM-Text 原论文笔记（仅参考） |
 | [AGENTS.md §7.5](../../AGENTS.md#75-决策时间表) | Logos 决策时间表 |
 

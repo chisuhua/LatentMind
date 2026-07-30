@@ -325,15 +325,15 @@
 
 | 文档 | 关系 |
 |------|------|
-| [logos-whitepaper.md](./logos-whitepaper.md) | Logos 主线架构白皮书（本文档的父级）|
-| [logos-k-strategy.md](./logos-k-strategy.md) | K 值策略与端侧可行性 |
+| [whitepaper.md](./whitepaper.md) | Logos 主线架构白皮书（本文档的父级）|
+| [k-strategy.md](./k-strategy.md) | K 值策略与端侧可行性 |
 | [docs/architecture.md](../architecture.md) | 高层项目概览（v1.2 新架构故事）|
 | [AGENTS.md §6](../../AGENTS.md#6-里程碑) | 项目里程碑总览 |
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
-| [logos-64m-validation-plan.md](./logos-64m-validation-plan.md) | 64M 起点验证计划 |
-| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比 |
-| [logos-v2-architecture.md](./logos-v2-architecture.md) | v2.0 多种循环策略 |
-| [logos-v3-architecture.md](./logos-v3-architecture.md) | v3.0 多轨迹并行 |
+| [64m-validation-plan.md](./64m-validation-plan.md) | 64M 起点验证计划 |
+| [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比 |
+| [v2-architecture.md](./v2-architecture.md) | v2.0 多种循环策略 |
+| [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行 |
 | [docs/research/sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md) | SADKO 64M 验证计划（并行）|
 | [docs/research/sadko-whitepaper.md](./sadko-whitepaper.md) | SADKO 白皮书（双轨协同）|
 

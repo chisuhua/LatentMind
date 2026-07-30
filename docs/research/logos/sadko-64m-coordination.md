@@ -4,7 +4,7 @@
 > **性质**：双轨项目的核心协调文档（非单一架构文档）
 > **最后更新**：2026-07-29（v1.0 新增）
 > **关联**：
-> - Logos 64M 验证：[logos-64m-validation-plan.md](./logos-64m-validation-plan.md)
+> - Logos 64M 验证：[64m-validation-plan.md](./64m-validation-plan.md)
 > - SADKO 64M 验证：[sadko-64m-validation-plan.md](./sadko-64m-validation-plan.md)
 
 ---
@@ -250,7 +250,7 @@ Phase 0 全部 P.0.1 - P.0.6 验收通过后，**两条路线同时启动**。
 
 ### 3.2 Logos 64M（Phase 1A）
 
-详见 [logos-64m-validation-plan.md](./logos-64m-validation-plan.md)：
+详见 [64m-validation-plan.md](./64m-validation-plan.md)：
 - v1.0：双时间尺度对比（A.1 HRM / A.2 Split-GQA / A.3 混合 / A.4 基线）
 - v2.0：循环策略对比（串行 / PLT / 早退 / Radix / 层次化）
 - v3.0：多轨迹并行（不集成 GRAM，独立实现）
@@ -426,11 +426,11 @@ Phase 2 结果 → 决策
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §0](./logos-64m-validation-plan.md) | Logos 64M 验证（引用本协调文档）|
+| [64m-validation-plan.md §0](./64m-validation-plan.md) | Logos 64M 验证（引用本协调文档）|
 | [sadko-64m-validation-plan.md §0](./sadko-64m-validation-plan.md) | SADKO 64M 验证（引用本协调文档）|
-| [logos-whitepaper.md §2](./logos-whitepaper.md) | Logos 主线架构 |
+| [whitepaper.md §2](./whitepaper.md) | Logos 主线架构 |
 | [sadko-whitepaper.md §2](./sadko-whitepaper.md) | SADKO 主线架构 |
-| [logos-roadmap.md §5](./logos-roadmap.md) | Logos 路线图（含双轨协同）|
+| [roadmap.md §5](./roadmap.md) | Logos 路线图（含双轨协同）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 
 ---

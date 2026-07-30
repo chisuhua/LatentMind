@@ -1,8 +1,8 @@
 # Logos-Native-64M v2.0 架构设计：多种循环策略对比
 
 > **一句话定位**：在 v1.0 最优基座（A.3 混合风格应最优）上对比五种循环策略——串行、PLT、Per-Token 早退、Radix Cache 多路径、层次化推理，绘制"延迟-精度" Pareto 曲线。
-> **上游文档**：[logos-64m-validation-plan.md §4](./logos-64m-validation-plan.md#4-v20多种循环策略对比)
-> **下游文档**：[logos-v3-architecture.md](./logos-v3-architecture.md)（基于 v2.0 推荐循环策略）
+> **上游文档**：[64m-validation-plan.md §4](./64m-validation-plan.md#4-v20多种循环策略对比)
+> **下游文档**：[v3-architecture.md](./v3-architecture.md)（基于 v2.0 推荐循环策略）
 > **最后更新**：2026-07-29（v1.2：K 值调整为超参数，去 GR AM 集成）
 
 ---
@@ -26,7 +26,7 @@
 | **B.4 Radix Cache 多路径** | ≈ 1x | 多路径并行 | 多假设决策 |
 | **B.5 层次化推理** | K_main + max(K_sub) | 主 + 子并行 | 可分解推理 |
 
-**核心论证**：详见 [logos-k-strategy.md §4](./logos-k-strategy.md#4-多种端侧并行化策略latency-killer)。
+**核心论证**：详见 [k-strategy.md §4](./k-strategy.md#4-多种端侧并行化策略latency-killer)。
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## 2. 基座假设
 
-本计划假设 v1.0 出 A.3 混合风格为最优基座。详细配置见 [logos-v1-architecture.md §3.3](./logos-v1-architecture.md#33-a3-混合风格应最优)。
+本计划假设 v1.0 出 A.3 混合风格为最优基座。详细配置见 [v1-architecture.md §3.3](./v1-architecture.md#33-a3-混合风格应最优)。
 
 若 v1.0 出其他结论，基座相应调整。
 
@@ -141,7 +141,7 @@ def per_token_early_exit(x, max_K=8, epsilon=1e-4):
 
 ### 3.4 B.4 Radix Cache 多路径并行
 
-**借鉴自**：你提出的方案（详见 [logos-k-strategy.md §2.3](./logos-k-strategy.md#23-radix-cache-多路径并行)）
+**借鉴自**：你提出的方案（详见 [k-strategy.md §2.3](./k-strategy.md#23-radix-cache-多路径并行)）
 
 **核心思想**：借鉴 PLT 思想，多条路径在 latent tree search 中并行采样，共享前缀通过 Radix Tree 缓存。
 
@@ -185,7 +185,7 @@ def radix_cache_multipath(x, n_paths=4, K=2):
 
 ### 3.5 B.5 层次化推理
 
-**借鉴自**：你提出的方案（详见 [logos-k-strategy.md §2.4](./logos-k-strategy.md#24-层次化推理)）
+**借鉴自**：你提出的方案（详见 [k-strategy.md §2.4](./k-strategy.md#24-层次化推理)）
 
 **核心思想**：主推理在关键节点暂停，派生子推理完成局部任务，再恢复。
 
@@ -353,10 +353,10 @@ training_config = {
 
 | 文档 | 关系 |
 |------|------|
-| [logos-64m-validation-plan.md §4](./logos-64m-validation-plan.md#4-v20多种循环策略对比) | 本文档的父级 |
-| [logos-v1-architecture.md](./logos-v1-architecture.md) | v1.0 双时间尺度对比（v2.0 基座）|
-| [logos-k-strategy.md §2](./logos-k-strategy.md) | 五策略核心论证 |
-| [logos-whitepaper.md §2](./logos-whitepaper.md) | Logos 白皮书 |
+| [64m-validation-plan.md §4](./64m-validation-plan.md#4-v20多种循环策略对比) | 本文档的父级 |
+| [v1-architecture.md](./v1-architecture.md) | v1.0 双时间尺度对比（v2.0 基座）|
+| [k-strategy.md §2](./k-strategy.md) | 五策略核心论证 |
+| [whitepaper.md §2](./whitepaper.md) | Logos 白皮书 |
 | [docs/rfcs/RDD-0001-k-sweep-experiment.md](../rfcs/RDD-0001-k-sweep-experiment.md) | K-sweep RFC（已合并到本文档）|
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | PLT 架构详细（v2.0 B.2 借鉴）|
 | [docs/references/per-token-convergence.md](../references/per-token-convergence.md) | 早退证据（v2.0 B.3 依据）|
