@@ -15,19 +15,19 @@
 
 > 📦 **参考文档体系**（详见各文件）：
 > - 总体架构：[`docs/architecture.md`](docs/architecture.md)
-> - **Logos 主线白皮书**：[`docs/research/logos-whitepaper.md`](docs/research/logos-whitepaper.md)
-> - **Logos K 值策略**：[`docs/research/logos-k-strategy.md`](docs/research/logos-k-strategy.md)
-> - **Logos 路线图**：[`docs/research/logos-roadmap.md`](docs/research/logos-roadmap.md)
-> - **Logos 64M 验证计划**：[`docs/research/logos-64m-validation-plan.md`](docs/research/logos-64m-validation-plan.md)
-> - **Logos / SADKO 双轨协调中枢**：[`docs/research/logos-sadko-64m-coordination.md`](docs/research/logos-sadko-64m-coordination.md)（Phase 0 共享前置 + 交叉验证 + 决策矩阵）
+> - **Logos 主线白皮书**：[`docs/research/logos/whitepaper.md`](docs/research/logos/whitepaper.md)
+> - **Logos K 值策略**：[`docs/research/logos/k-strategy.md`](docs/research/logos/k-strategy.md)
+> - **Logos 路线图**：[`docs/research/logos/roadmap.md`](docs/research/logos/roadmap.md)
+> - **Logos 64M 验证计划**：[`docs/research/logos/64m-validation-plan.md`](docs/research/logos/64m-validation-plan.md)
+> - **Logos / SADKO 双轨协调中枢**：[`docs/research/logos/sadko-64m-coordination.md`](docs/research/logos/sadko-64m-coordination.md)（Phase 0 共享前置 + 交叉验证 + 决策矩阵）
 > - **Phase 0 实施指南**：[`docs/implementation/phase-0-implementation-guide.md`](docs/implementation/phase-0-implementation-guide.md)（6 项 P.0.x 的脚本 + 配置 + SOP + 验收）
 > - **Phase 0 失败回退 SOP**：[`docs/implementation/phase-0-recovery-sop.md`](docs/implementation/phase-0-recovery-sop.md)（失败决策树 + 升级路径）
 > - **实施文档索引**：[`docs/implementation/README.md`](docs/implementation/README.md)（近期可执行的工程规范集合）
-> - **Logos v1.0 架构（双时间尺度对比）**：[`docs/research/logos-v1-architecture.md`](docs/research/logos-v1-architecture.md)
-> - **Logos v2.0 架构（多种循环策略）**：[`docs/research/logos-v2-architecture.md`](docs/research/logos-v2-architecture.md)
-> - **Logos v3.0 架构（GRAM + Radix Cache）**：[`docs/research/logos-v3-architecture.md`](docs/research/logos-v3-architecture.md)
-> - **SADKO 白皮书**：[`docs/research/sadko-whitepaper.md`](docs/research/sadko-whitepaper.md)
-> - **SADKO 多模态原生设计**：[`docs/research/sadko-multimodal-native.md`](docs/research/sadko-multimodal-native.md)
+> - **Logos v1.0 架构（双时间尺度对比）**：[`docs/research/logos/v1-architecture.md`](docs/research/logos/v1-architecture.md)
+> - **Logos v2.0 架构（多种循环策略）**：[`docs/research/logos/v2-architecture.md`](docs/research/logos/v2-architecture.md)
+> - **Logos v3.0 架构（GRAM + Radix Cache）**：[`docs/research/logos/v3-architecture.md`](docs/research/logos/v3-architecture.md)
+> - **SADKO 白皮书**：[`docs/research/sadko/whitepaper.md`](docs/research/sadko/whitepaper.md)
+> - **SADKO 多模态原生设计**：[`docs/research/sadko/multimodal-native.md`](docs/research/sadko/multimodal-native.md)
 > - 外部研究笔记：[`docs/references/README.md`](docs/references/README.md)（HRM-Text、GRAM、TRM、RRM 谱系、LoopCoder-v2、Huginn、STARS、Per-Token Convergence 等——**仅作架构灵感参考**）
 > - 内部 R&D 提案：[`docs/rfcs/README.md`](docs/rfcs/README.md)
 > - 相关项目元信息：[`docs/references/projects.md`](docs/references/projects.md)（ChipForge / HydraForge / AgenticLlama / minimind）
@@ -132,7 +132,7 @@ Logos 分层递归潜空间引擎（~750M）—— 从零训练
 | +9 月 | Logos 1B 端侧 Demo | ⏳ 规划中 |
 | +12 月 | Logos 1B + SADKO 1.5B 完整融合 | ⏳ 规划中 |
 
-**详细路线图**：[docs/research/logos-roadmap.md](docs/research/logos-roadmap.md)
+**详细路线图**：[docs/research/logos/roadmap.md](docs/research/logos/roadmap.md)
 
 ---
 
@@ -168,7 +168,7 @@ Logos 分层递归潜空间引擎（~750M）—— 从零训练
 
 ### 7.3 SADKO 探索分支的定位升级
 
-> **2026-07-29 增补**：SADKO 从"文本认知推理备选"升级为"**多模态流形记忆与感知**"核心研究方向。详细论证见 [SADKO 多模态原生设计](docs/research/sadko-multimodal-native.md)。
+> **2026-07-29 增补**：SADKO 从"文本认知推理备选"升级为"**多模态流形记忆与感知**"核心研究方向。详细论证见 [SADKO 多模态原生设计](docs/research/sadko/multimodal-native.md)。
 
 **升级依据**（第一性原理）：
 - 双向注意力（无因果 Mask）天然处理流形
