@@ -171,3 +171,27 @@ docs/superpowers/specs/2026-07-30-elf-research-line-design.md:44:docs/research/
 ## 验证完成
 
 2026-07-30 验证完成：所有跨文档引用已更新为新子目录路径。
+
+---
+
+## 2026-07-31：ELF → Hippo 重命名（保留历史快照，上方 L1-L169 为 2026-07-30 原貌）
+
+> **背景**：ELF（"Entity-Linked Flow"或未展开的技术缩写）作为研究线名与项目 logos/sadko 隐喻命名风格不一致。决策：**研究线名重命名为 Hippo**（海马体，hippocampus 缩写，与"右脑=海马体"项目隐喻对齐；字符数 5 与 logos/sadko 对称）。
+> **历史记录保留**：上方 L1-L169 的 grep 输出为 2026-07-30 重构的真实历史快照——保留原貌以便回溯 sed/grep 命令的原始目标路径。
+> **本次变更范围**（不影响历史快照）：
+>
+> | 类别 | 操作 | 文件数 |
+> |------|------|--------|
+> | 目录重命名 | `docs/research/elf/` → `docs/research/hippo/` | 1 目录 / 4 文件 |
+> | 研究线文档改名 | `hippo/README.md`、3 份骨架 | 4 文件 |
+> | 顶级索引更新 | `docs/research/README.md` ELF 引用 → Hippo | 1 文件 |
+> | 待续 Phase 2 | sadko/elf-*.md → sadko/hippo-*.md + 主体文档 | ~12 文件 |
+> | 待续 Phase 3 | docs/superpowers/{specs,plans}/ 中 elf-* 文件名 + 全文 | 5 文件 + 4 文件 |
+> | 待续 Phase 3 | docs/references/implementation/rfcs 中 ELF 引用 | ~5 文件 |
+>
+> **后续验证点**：
+> - Phase 1 完成后：`docs/research/elf/` 不应存在；`docs/research/hippo/` 应含 4 文件
+> - Phase 2 完成后：`docs/research/sadko/elf-*.md` 不应存在；`docs/research/sadko/hippo-*.md` 应含 5 文件
+> - Phase 3 完成后：全局 grep `ELF` 仅在 (a) REFACTOR_MAP.md 历史快照 (b) hippo/README.md "原名 ELF" 注释 等"历史别名"位置残留
+>
+> **哲学依据**：项目已存在"右脑=海马体"隐喻（见 AGENTS.md §7 "海马体（流形记忆）"），ELF 命名其实是"补齐一致性"而非"引入新概念"。Hippo（5 字符）与 Logos（5 字符）/ SADKO（5 字符）字符数对称。

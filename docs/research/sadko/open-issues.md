@@ -1,7 +1,7 @@
 # SADKO 文档体系审查：冲突、遗漏与待讨论清单
 
 > **一句话定位**：对 docs/research 全部 8 份 SADKO 文档的一致性审查结果——技术冲突（需裁决）、数值/维度错误（需修正）、表述不一致（需统一）、设计遗漏（需补全）、开放问题（需讨论）
-> **审查范围**：whitepaper · 64m-validation-plan · v1/v2/v3-architecture · elf-vs-gdm-review · elf-graph-emergence · elf-phase0-manual · elf-lifecycle
+> **审查范围**：whitepaper · 64m-validation-plan · v1/v2/v3-architecture · hippo-vs-gdm-review · hippo-graph-emergence · hippo-phase0-manual · hippo-lifecycle
 > **最后更新**：2026-07-29
 > **状态**：大项已裁决（见 §7 落实记录），剩余 D/E 类问题（设计遗漏、开放讨论）仍待逐项推进。
 
@@ -20,10 +20,10 @@
 
 ### A-02 🔴 压缩数据源层选择与融合方式不统一，且维度对不上
 
-- **位置**：[validation-plan](./64m-validation-plan.md) §3.2/§3.3（"融合 L3+L5 KV"）· [v2-arch](./v2-architecture.md) §2 决策表（"L2/L3 + L4/L5"）· [v3-arch](./v3-architecture.md) §2（ELF 输入"完整 chunk 的 L3+L5 KV 64×768"）
+- **位置**：[validation-plan](./64m-validation-plan.md) §3.2/§3.3（"融合 L3+L5 KV"）· [v2-arch](./v2-architecture.md) §2 决策表（"L2/L3 + L4/L5"）· [v3-arch](./v3-architecture.md) §2（Hippo 输入"完整 chunk 的 L3+L5 KV 64×768"）
 - **问题**：
   1. 层选择三个版本：L3+L5 / L2+L4（memory_write 代码取 anchor_layers[:2]）/ L2/L3+L4/L5；
-  2. 单层 KV 每 chunk 展平维度为 64×(8 heads×48)=**64×384**。两层**均值池化**得 384 维，但 ELF `kv_input_dim=768` 与 MLP Compressor 输入 768 都对不上；只有**拼接**两层才得 768。
+  2. 单层 KV 每 chunk 展平维度为 64×(8 heads×48)=**64×384**。两层**均值池化**得 384 维，但 Hippo `kv_input_dim=768` 与 MLP Compressor 输入 768 都对不上；只有**拼接**两层才得 768。
 - **待裁决**：统一为「L3+L5 **拼接**（64×768）」或改压缩器输入为 384；并同步修改 v2/v3 所有相关配置与代码。
 
 ### A-03 🔴 Cross-Attention 读取范围：先 Top-64 检索 vs 全量注意力
@@ -40,8 +40,8 @@
 
 ### A-05 🟡 "推理期零开销"的适用范围需要澄清
 
-- **位置**：[whitepaper](./whitepaper.md) §2/§3.5（"推理期零开销 Zero-Overhead"）vs [v2-arch](./v2-architecture.md)/[v3-arch](./v3-architecture.md)（推理时 CA 持续读取 MemPool + 新内容需 ELF 编码压缩）
-- **问题**："零开销"仅指**扩散对齐的 Teacher 在推理时被丢弃**，但字面易被读为"右脑推理期免费"。实际推理期仍有：ELF 编码新内容、FSQ 量化、Router 检索、CA 读取的开销。
+- **位置**：[whitepaper](./whitepaper.md) §2/§3.5（"推理期零开销 Zero-Overhead"）vs [v2-arch](./v2-architecture.md)/[v3-arch](./v3-architecture.md)（推理时 CA 持续读取 MemPool + 新内容需 Hippo 编码压缩）
+- **问题**："零开销"仅指**扩散对齐的 Teacher 在推理时被丢弃**，但字面易被读为"右脑推理期免费"。实际推理期仍有：Hippo 编码新内容、FSQ 量化、Router 检索、CA 读取的开销。
 - **待裁决**：在白皮书中将表述精确化为"对齐桥梁推理期零开销；右脑读写路径推理期开销为 O(N_mem) 常数级"，避免后续文档误引。
 
 ---
@@ -81,13 +81,13 @@
 
 ### B-06 🟡 "压缩比"三套数字三种口径
 
-- **位置**：[v2-arch](./v2-architecture.md) §2（"768/4，压缩比 4:1"，**维度压缩**）· [whitepaper](./whitepaper.md) §6.2（"300M 约 15:1，7B 后约 8:1"，口径未注明）· [graph-emergence](./elf-graph-emergence.md) §四（"L/M ≈ 32x"，**token 数压缩**）
+- **位置**：[v2-arch](./v2-architecture.md) §2（"768/4，压缩比 4:1"，**维度压缩**）· [whitepaper](./whitepaper.md) §6.2（"300M 约 15:1，7B 后约 8:1"，口径未注明）· [graph-emergence](./hippo-graph-emergence.md) §四（"L/M ≈ 32x"，**token 数压缩**）
 - **待修正**：增加术语定义表，区分「维度压缩比（768→192 = 4:1）」「token 压缩比（L/M）」「存储压缩比（含 K/V 双份与层数）」，并回填白皮书的 15:1/8:1 口径。
 
-### B-07 🟢 ELF 内部维度 192 vs 384
+### B-07 🟢 Hippo 内部维度 192 vs 384
 
-- **位置**：[v3-arch](./v3-architecture.md) §3（yaml `encoder_dim: 192` vs dataclass `elf_hidden_size: 384`）
-- **待修正**：二选一（影响 ELF 参数量 ~5M 的核算与 input_proj 形状），建议 384（与早期设计一致，容量更足）。
+- **位置**：[v3-arch](./v3-architecture.md) §3（yaml `encoder_dim: 192` vs dataclass `hippo_hidden_size: 384`）
+- **待修正**：二选一（影响 Hippo 参数量 ~5M 的核算与 input_proj 形状），建议 384（与早期设计一致，容量更足）。
 
 ### B-08 🟢 零散数值项
 
@@ -132,11 +132,11 @@
 
 ### C-07 🟢 FSQ「量化维度」术语冲突
 
-- [v3-arch](./v3-architecture.md)：4 个标量量化维度（levels）vs [graph-emergence](./elf-graph-emergence.md) §1.3："量化维度 D ≈ log₂(N)+R，建议 64/128 起步"——两者说的不是同一个量（前者是 FSQ 标量数，后者像 latent 维/码本规模）。需统一术语并消除 64/128 与 256 码本的表面矛盾。
+- [v3-arch](./v3-architecture.md)：4 个标量量化维度（levels）vs [graph-emergence](./hippo-graph-emergence.md) §1.3："量化维度 D ≈ log₂(N)+R，建议 64/128 起步"——两者说的不是同一个量（前者是 FSQ 标量数，后者像 latent 维/码本规模）。需统一术语并消除 64/128 与 256 码本的表面矛盾。
 
 ### C-08 🟢 whitepaper Scaling 表缺 64M 行
 
-- [whitepaper](./whitepaper.md) §6.1 演进表从 300M 起步，但 64M 已有确定配置（ELF 5M、FSQ 256、CA 标量门控 init=-2、全量 KL 之前的 Phase 对齐）。建议补一行 64M，使"64M→300M→1.5B→7B→70B"链条完整。
+- [whitepaper](./whitepaper.md) §6.1 演进表从 300M 起步，但 64M 已有确定配置（Hippo 5M、FSQ 256、CA 标量门控 init=-2、全量 KL 之前的 Phase 对齐）。建议补一行 64M，使"64M→300M→1.5B→7B→70B"链条完整。
 
 ---
 
@@ -144,7 +144,7 @@
 
 | # | 优先级 | 遗漏项 | 说明 | 建议落点 |
 | :--- | :--- | :--- | :--- | :--- |
-| D-01 | 🔴 | **ELF decode 模块未定义** | Phase 1 重构 Loss 需要 z→KV 的解码器（代码注释自承"需要实现 decode"），FM Decoder 的结构、ODE 积分方向、输出头（192→64×768?）全部缺失 | v3-arch §4.1 补 `decode()` 与 ODE solver 规格 |
+| D-01 | 🔴 | **Hippo decode 模块未定义** | Phase 1 重构 Loss 需要 z→KV 的解码器（代码注释自承"需要实现 decode"），FM Decoder 的结构、ODE 积分方向、输出头（192→64×768?）全部缺失 | v3-arch §4.1 补 `decode()` 与 ODE solver 规格 |
 | D-02 | 🟡 | **左脑校验模块无训练目标** | Verifier 的 threshold 标称"可学习"，但任何文档都未给出它的 loss（什么信号告诉它何时该触发二次检索？） | v3-arch §4.5 补训练目标（如对"触发后 EM 提升"做 RL/对比损失，或简化为固定阈值超参） |
 | D-03 | 🟡 | **semantic_tag（16 维）来源未定义** | 动态门控与 Dual-Path FFN 都消费 semantic_tag，推理时填零向量则门控退化为静态——但"背诵 vs 推理"的门控分化正是实验 C 的验证对象。标签由谁产生（数据标注？左脑自产？）没有答案 | validation-plan §4.2 补标签生成方案；实验 C 设计需联动修正 |
 | D-04 | 🟡 | **Memory Token 的 tokenizer 处理** | plan §0 自己提出"vocab=6400 小词表，Memory Token 需特殊处理"后再无下文 | v1-arch 补一节：是否扩充词表 / 用现有特殊 token / 完全走嵌入侧绕过 tokenizer |
@@ -152,7 +152,7 @@
 | D-06 | 🟡 | **训练/评估数据集构建方案** | kb_corpus、long_corpus_8k_16k、remote_recall_qa_50k、四大实验的 fuzzy/exact/association/recite/reason/distractor 测试集均只有文件名 | validation-plan 补数据构建附录（来源、构造规则、规模、防泄漏） |
 | D-07 | 🟡 | **两个关键验收指标无度量定义** | "语义理解提升 >8%"（对什么基准、什么指标？）与"码字插值语义合理率 ≥60%"（谁评判、评分 rubric？） | v3-arch §5 补度量规格；phase0-manual 补插值评估 rubric |
 | D-08 | 🟢 | **黄金测试集与关键注意力头的建立流程** | lifecycle 的熔断与 EWC 依赖"黄金标准测试集"和"Phase 0 标记的核心注意力头"，但建立方法未定义 | lifecycle §3 补建立流程（或注明随 phase0-manual 交付物产出） |
-| D-09 | 🟢 | **事实感知三模块未落入 64M 架构** | elf-vs-gdm §3.1 的 Fact-Aware Flow Weight / FSQ 弱监督锚定 / Fact-Gate 是正式决策，但 v3-arch 的模块与 Phase 流水线均未包含 | v3-arch 补入或在其中注明"推迟至 300M"并说明理由 |
+| D-09 | 🟢 | **事实感知三模块未落入 64M 架构** | hippo-vs-gdm §3.1 的 Fact-Aware Flow Weight / FSQ 弱监督锚定 / Fact-Gate 是正式决策，但 v3-arch 的模块与 Phase 流水线均未包含 | v3-arch 补入或在其中注明"推迟至 300M"并说明理由 |
 | D-10 | 🟢 | **v2 用 hidden_states 冒充 KV 的简化** | v2-arch §5（旧稿 `forward_with_memory` 注释"简化： 用 hidden 代替 KV"）若进入实现，压缩的就不是设计要求的 Static KV | v2-arch 明确验收必须以真实 Static KV 为准，hidden 版仅限冒烟测试 |
 
 ---
@@ -177,9 +177,9 @@
 1. **三阶段串行门禁**：v1.0→v2.0→v3.0 的启动许可证机制、每阶段"不可逾越"原则，在 plan、v1/v2/v3 架构文档间完全一致。
 2. **消融隔离与强制早停**：LR 上限（主干 3e-4/右脑 1e-4）、每实验 2000 步、1000 步无改善终止、四实验同一数据集——plan 与 v3-arch §7 一致。
 3. **门控初始化值**：CA 骨架 gate=-10（v1.0 零激活）→ -2.0（v2.0 激活）；Dual-Path gate=0.5 中性初始化——各文档一致。
-4. **v2→v3 替换边界**：读取管线 100% 复用、仅替换压缩器（MLP→ELF）与检索器（Cosine→FSQ Router）——plan §6 与 v3-arch 一致。
-5. **负结果资产化哲学**：白皮书 §3.6/§4.2、plan §4.6、v3-arch §8、elf 四份文档对"证伪清单与验证清单同等重要"的表述完全一致。
-6. **图结构隐式涌现立场**：elf-vs-gdm（放弃显式 GDM）、graph-emergence（禁止 $\mathcal{L}_{graph}$）、phase0-manual（结构探针只做观测不做损失）三者自洽。
+4. **v2→v3 替换边界**：读取管线 100% 复用、仅替换压缩器（MLP→Hippo）与检索器（Cosine→FSQ Router）——plan §6 与 v3-arch 一致。
+5. **负结果资产化哲学**：白皮书 §3.6/§4.2、plan §4.6、v3-arch §8、hippo 四份文档对"证伪清单与验证清单同等重要"的表述完全一致。
+6. **图结构隐式涌现立场**：hippo-vs-gdm（放弃显式 GDM）、graph-emergence（禁止 $\mathcal{L}_{graph}$）、phase0-manual（结构探针只做观测不做损失）三者自洽。
 7. **扩散对齐 Teacher-Student 设计**：0.3×KL+0.7×CE、2000-3000 步、Teacher 冻结后丢弃——白皮书、plan、v3-arch 一致。
 
 ---
@@ -200,7 +200,7 @@
 第三波（写 v3.0 代码前）：
   B-02 码字嵌入模块
   B-05 FSQ levels 裁决
-  D-01 ELF decode 规格
+  D-01 Hippo decode 规格
   D-03 semantic_tag 来源
   C-01/C-02/C-03 实验阈值统一
 
@@ -239,7 +239,7 @@
 - **B-05 FSQ levels [8,8,8,8] vs [8,8,4]**：建议统一为 [8,8,4]=256，文档已更新但未明确"禁止 [8,8,8,8]"，等用户确认
 - **B-07 压缩比术语**：建议统一表（维度/Token/存储三种口径），尚未补
 - **A-03 检索-读取数据流**：尚未明确"Router Top-K → CA 仅读选中 chunks"接口规范
-- **B-06 ELF hidden 192 vs 384**：保留两版配置，待确认
+- **B-06 Hippo hidden 192 vs 384**：保留两版配置，待确认
 - **C-07/B-08 零散**：CA 8×48 vs 6×32（dataclass 与 yaml 冲突）、rms_norm_eps、2b epochs 等小项
-- **D 类**：ELF decode 模块、D-02 校验训练目标、D-03 semantic_tag 来源、D-04 Memory Token tokenizer、D-05 MemPool 持久化、D-06 数据集构建、D-07 指标定义、D-08 黄金集建立、D-09 事实感知模块落位、D-10 v2 hidden 简化说明——共 10 项仍待补
+- **D 类**：Hippo decode 模块、D-02 校验训练目标、D-03 semantic_tag 来源、D-04 Memory Token tokenizer、D-05 MemPool 持久化、D-06 数据集构建、D-07 指标定义、D-08 黄金集建立、D-09 事实感知模块落位、D-10 v2 hidden 简化说明——共 10 项仍待补
 - **E-02**（参预算二次确认）、**E-03**（图论验证深度）、**E-04**（生命周期机制落地阶段）、**E-05**（熵分离实验是否随 RoPE 重做）、**E-06**（多层遗忘速率粒度）

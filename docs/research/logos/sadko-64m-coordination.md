@@ -36,7 +36,7 @@
         ↓                           ↓
    Phase 1A (并行 ~10 周)      Phase 1B (并行 ~10 周)
    Logos 64M 验证               SADKO 64M 验证
-   (H/L 分层循环 + 循环策略)    (Split-GQA + MemPool + ELF)
+   (H/L 分层循环 + 循环策略)    (Split-GQA + MemPool + Hippo)
                        ↓
         Phase 2（交叉验证，~2 周）
         ├─ Logos vs SADKO 在 6 类任务上对比
@@ -260,7 +260,7 @@ Phase 0 全部 P.0.1 - P.0.6 验收通过后，**两条路线同时启动**。
 详见 [sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md)：
 - v1.0：基座适配（Split-GQA + 异构 RoPE + Dual-Path FFN + CA 骨架）
 - v2.0：记忆压缩（Shared MemPool + 192 维 + 压缩触发器）
-- v3.0：灵魂注入（ELF-Lite + FSQ + 扩散对齐 + 四大实验）
+- v3.0：灵魂注入（Hippo-Lite + FSQ + 扩散对齐 + 四大实验）
 
 ### 3.4 硬件时间表（关键协调点）
 

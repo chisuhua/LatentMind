@@ -66,7 +66,7 @@
 | LLaVA (CLIP + LLM) | 单向 LLM + 单向 CLIP | ❌ 双向 CLIP 但无全局压缩 |
 | Flamingo | 单向 + 交叉注意力 | ❌ 仍以序列方向处理图像 |
 | BLIP-2 | Q-Former 单向 | ❌ Q-Former 仍是序列 |
-| **SADKO ELF** | **双向 + Cross-Attention 桥梁** | **✅ 真正流形全局** |
+| **SADKO Hippo** | **双向 + Cross-Attention 桥梁** | **✅ 真正流形全局** |
 
 ### 2.2 Flow Matching (ODE) = 连续压缩-解压
 
@@ -110,7 +110,7 @@
 
 | 维度 | LLaVA / Flamingo | BLIP-2 | **SADKO** |
 |------|:---:|:---:|:---:|
-| **图像编码** | 独立 ViT（CLIP/SigLIP）| Q-Former 投影 | **双向 ELF + FM 压缩** |
+| **图像编码** | 独立 ViT（CLIP/SigLIP）| Q-Former 投影 | **双向 Hippo + FM 压缩** |
 | **跨模态融合** | Token 拼接 + 投影 | Q-Former 对齐 | **FSQ 共享码本 + Slerp** |
 | **压缩-解压对称** | ❌ 单向生成 | ❌ 无解压 | **✅ ODE 可逆** |
 | **流形全局感知** | ⚠️ ViT 双向但无全局压缩 | ❌ Q-Former 单向 | **✅ 双向 + 全局 FSQ** |
@@ -174,7 +174,7 @@
 ```
 ┌─────────────────── 主线 (HRM-Text + GRAM) ───────────────────┐
 │  推理 + 决策（循环/多轨迹的优势域）                              │
-│  接收: 共享感知主干输出 + SADKO ELF Memory KV (via XA)         │
+│  接收: 共享感知主干输出 + SADKO Hippo Memory KV (via XA)         │
 │  输出: 动作 / 决策 / 结构化解释                                 │
 └────────────────────────┬──────────────────────────────────────┘
                          │ Cross-Attention 融合
@@ -187,18 +187,18 @@
                          ↓
 ┌─────────────────── SADKO 探索分支 ───────────────────────────┐
 │  感知 + 记忆 + 知识 + 多模态（双向/FM/FSQ 的优势域）           │
-│  输出: 共享感知主干 + ELF Memory KV Pool                       │
+│  输出: 共享感知主干 + Hippo Memory KV Pool                       │
 │  通过 Cross-Attention 喂给主线 HRM 中间层                       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**"HRM 是大脑皮层，ELF 是海马体"**——SADKO 提供"长期记忆 + 多模态感知"，主线负责"推理 + 决策"。
+**"HRM 是大脑皮层，Hippo 是海马体"**——SADKO 提供"长期记忆 + 多模态感知"，主线负责"推理 + 决策"。
 
 ### 5.3 决策原则
 
 1. **不锁定原则**：两条路线均未完成小规模验证前，不锁定任一方向
 2. **机制优先**：64M 阶段产出《已验证/已证伪机制清单》比"最佳性能"更重要
-3. **融合优先**：两条路线最终应融合（ELF KV → HRM Cross-Attention），而非互斥
+3. **融合优先**：两条路线最终应融合（Hippo KV → HRM Cross-Attention），而非互斥
 4. **K 自适应**：主线 K 不是固定超参，应根据任务难度 + per-token 收敛状态动态调整
 
 ---
@@ -210,7 +210,7 @@
 **MiniMind3 64M 文本基座**（见 [64m-validation-plan.md](./64m-validation-plan.md)）：
 - v1.0：左脑改造（Split-GQA + 异构 RoPE + Dual-Path FFN）
 - v2.0：MemPool 压缩-读取管线
-- v3.0：ELF-Lite + FSQ + 扩散对齐 + 四大实验
+- v3.0：Hippo-Lite + FSQ + 扩散对齐 + 四大实验
 
 **完成后**：产出《已验证/已证伪机制清单》。
 
@@ -218,7 +218,7 @@
 
 **300M 双脑融合**：
 - 文本基座 → 多模态扩展（图像 + 文本）
-- 验证 70/20/10 黄金比例（KV 输入比例，见 [elf-graph-emergence.md §4](./elf-graph-emergence.md)）
+- 验证 70/20/10 黄金比例（KV 输入比例，见 [hippo-graph-emergence.md §4](./hippo-graph-emergence.md)）
 - 验证 FSQ 码字的跨模态对齐（图像"猫" + 文本"cat" → 同一码字）
 
 **关键实验**：
@@ -256,8 +256,8 @@
 |------|------|
 | [whitepaper.md](./whitepaper.md) | 主白皮书，§1.4 是本文档的精简版 |
 | [64m-validation-plan.md](./64m-validation-plan.md) | 64M 验证计划（本文档 §6.1 引用）|
-| [elf-vs-gdm-review.md](./elf-vs-gdm-review.md) | 双向 + FM vs 图扩散的六维裁决 |
-| [elf-graph-emergence.md](./elf-graph-emergence.md) | 图结构涌现机制（FSQ 码字 → 知识图谱）|
+| [hippo-vs-gdm-review.md](./hippo-vs-gdm-review.md) | 双向 + FM vs 图扩散的六维裁决 |
+| [hippo-graph-emergence.md](./hippo-graph-emergence.md) | 图结构涌现机制（FSQ 码字 → 知识图谱）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 | [../references/loopcoder-v2.md](../references/loopcoder-v2.md) | 触发本文档的关键论文 |
 

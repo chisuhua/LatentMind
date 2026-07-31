@@ -1,14 +1,14 @@
 # SADKO 右脑 vs GDM-v1.2：架构裁决与修订方案
 
 > **一句话定位**：右脑技术路线的决策记录——为什么 Flow Matching + 双向注意力全面优于 Graph Diffusion，以及放弃显式 GDM 后的修订方案
-> **关联文档**：[whitepaper.md](./whitepaper.md) §2.1（右脑 ELF 定位）· [elf-graph-emergence.md](./elf-graph-emergence.md)（图结构涌现机制）
+> **关联文档**：[whitepaper.md](./whitepaper.md) §2.1（右脑 Hippo 定位）· [hippo-graph-emergence.md](./hippo-graph-emergence.md)（图结构涌现机制）
 > **最后更新**：2026-07-29
 
 ---
 
 ## 一、 背景
 
-讨论源于对 SADKO（左脑 AR + 右脑 ELF/Flow Matching）架构与另一候选方案 **GDM-v1.2（Graph Diffusion Memory，图扩散记忆）** 的对比审查。结论：**SADKO 的"流匹配 + 双向编码"在数学本质和工程可行性上全面优于"图扩散"**。GDM 方案虽然抓住了"图基因"，但在生成范式选择上陷入"为了图而图"的局部最优，忽略了记忆压缩与提取的底层物理约束。
+讨论源于对 SADKO（左脑 AR + 右脑 Hippo/Flow Matching）架构与另一候选方案 **GDM-v1.2（Graph Diffusion Memory，图扩散记忆）** 的对比审查。结论：**SADKO 的"流匹配 + 双向编码"在数学本质和工程可行性上全面优于"图扩散"**。GDM 方案虽然抓住了"图基因"，但在生成范式选择上陷入"为了图而图"的局部最优，忽略了记忆压缩与提取的底层物理约束。
 
 ---
 

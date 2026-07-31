@@ -1,6 +1,6 @@
 # SADKO-Native-64M v3.0 架构设计：灵魂注入层（完整机制验证）
 
-> **一句话定位**：v3.0 施工图纸——替换 MLP 压缩器为 ELF-Lite（Flow Matching）、引入 FSQ 离散化与内容寻址、执行扩散对齐与四大核心实验，产出《已验证/已证伪机制清单》
+> **一句话定位**：v3.0 施工图纸——替换 MLP 压缩器为 Hippo-Lite（Flow Matching）、引入 FSQ 离散化与内容寻址、执行扩散对齐与四大核心实验，产出《已验证/已证伪机制清单》
 > **上游文档**：[v2-architecture.md](./v2-architecture.md)（v2.0 管线）· [whitepaper.md](./whitepaper.md) §4（四大实验理论依据）
 > **最后更新**：2026-07-29
 
@@ -10,7 +10,7 @@
 
 在 v2.0 验证"压缩-读取管线可行"的基础上：
 
-- **替换** MLP Compressor → 右脑 ELF-Lite（双向 Transformer + Flow Matching）
+- **替换** MLP Compressor → 右脑 Hippo-Lite（双向 Transformer + Flow Matching）
 - **新增** FSQ 离散化 + 内容寻址 Router
 - **替换** 标量门控 → 动态门控网络
 - **新增** 左脑校验模块（置信度阈值过滤）
@@ -36,7 +36,7 @@ SADKO-Native-64M v3.0 (全架构)
   ★ 新增: 动态门控网络 (替代标量 gate)
   ★ 新增: 左脑校验模块 (置信度过滤)
 
-[右脑 ELF-Lite] (★ 替换 MLP Compressor, ~5M)
+[右脑 Hippo-Lite] (★ 替换 MLP Compressor, ~5M)
   TransformerEncoder × 2 (双向注意力, 无因果 Mask)
   Flow Matching Head (速度场预测)
   输入: chunk KV [64, 768] → 输出: z [192]
@@ -53,14 +53,14 @@ SADKO-Native-64M v3.0 (全架构)
   + Position Bias (保留 v2.0)
 
 [扩散对齐桥梁] (★ 新增训练阶段)
-  Teacher: ELF-Lite (冻结)
+  Teacher: Hippo-Lite (冻结)
   Student: 左脑 Memory Embedding + 顶层
   Loss: 0.3×KL + 0.7×CE
   训练后: Teacher 丢弃, 推理零开销
 ═══════════════════════════════════════════════════════════════
 参数变化 (vs v2.0):
     ├── 移除 MLP Compressor: -0.771M
-    ├── 新增 ELF-Lite: +5.0M
+    ├── 新增 Hippo-Lite: +5.0M
     ├── 新增 FSQ: +0.05M
     ├── 新增 code_embed (FSQ→KV 嵌入表): +0.196M
     ├── 新增动态门控: +0.15M
@@ -91,11 +91,11 @@ sadko:
     chunk_size: 64
     topk_chunks: 64
 
-  # ===== v3.0 新增: 右脑 ELF-Lite =====
-  elf:
+  # ===== v3.0 新增: 右脑 Hippo-Lite =====
+  hippo:
     encoder_layers: 2
     encoder_heads: 4
-    encoder_dim: 192            # ELF 内部计算维度
+    encoder_dim: 192            # Hippo 内部计算维度
     flow_matching_steps: 4      # ODE 积分步数
     kv_input_dim: 768           # 输入 KV 维度
     elf_chunk_len: 64           # 输入 chunk 长度
@@ -132,7 +132,7 @@ sadko:
 @dataclass
 class SADKOv3Config(SADKOv2Config):
     stage: str = "v3"
-    # ELF-Lite
+    # Hippo-Lite
     elf_num_layers: int = 2
     elf_num_heads: int = 4
     elf_hidden_size: int = 384
@@ -160,7 +160,7 @@ class SADKOv3Config(SADKOv2Config):
 
 ## 4. 核心模块实现
 
-### 4.1 右脑 ELF-Lite
+### 4.1 右脑 Hippo-Lite
 
 ```python
 # elf_lite.py
@@ -172,9 +172,9 @@ class ELFLite(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.kv_dim = config.sadko.elf.kv_input_dim      # 768
-        self.latent_dim = config.sadko.elf.encoder_dim    # 192
-        self.chunk_len = config.sadko.elf.elf_chunk_len   # 64
+        self.kv_dim = config.sadko.hippo.kv_input_dim      # 768
+        self.latent_dim = config.sadko.hippo.encoder_dim    # 192
+        self.chunk_len = config.sadko.hippo.hippo_chunk_len   # 64
 
         # 输入投影: KV 768 → 192 (备选: 经 384 中间维)
         self.input_proj = nn.Linear(self.kv_dim, self.latent_dim)
@@ -183,14 +183,14 @@ class ELFLite(nn.Module):
         # ★ 双向 Transformer Encoder (无因果 Mask)
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=self.latent_dim,
-            nhead=config.sadko.elf.encoder_heads,          # 4
+            nhead=config.sadko.hippo.encoder_heads,          # 4
             dim_feedforward=self.latent_dim * 4,
             activation='gelu',
             batch_first=True,
             norm_first=True
         )
         self.encoder = nn.TransformerEncoder(
-            encoder_layer, num_layers=config.sadko.elf.encoder_layers)  # 2
+            encoder_layer, num_layers=config.sadko.hippo.encoder_layers)  # 2
 
         # 池化: [64, 192] → [192] (加权池化或均值)
         self.pool = nn.Linear(self.latent_dim, 1, bias=False)
@@ -471,7 +471,7 @@ class LeftBrainVerifier(nn.Module):
 def diffusion_alignment_step(elf_teacher, ar_student, kb_batch, fsq, config):
     """
     Phase 4: 扩散桥梁对齐.
-    Teacher (ELF, 冻结) 提供连续语义监督 → Student (AR) 学习拟合.
+    Teacher (Hippo, 冻结) 提供连续语义监督 → Student (AR) 学习拟合.
     """
     # 1. Teacher: 生成连续语义分布
     with torch.no_grad():
@@ -507,7 +507,7 @@ phase_1_elf_pretrain:
   acceptance: 重构 KV 后 PPL 增加 < 5%
 
 phase_2_fsq:
-  data: ELF 编码后的连续潜向量
+  data: Hippo 编码后的连续潜向量
   model: FSQQuantizer
   loss: quantization_error (MSE)
   epochs: 3
@@ -839,14 +839,14 @@ Phase 3.5 Rote 基线: EM > 95% ?
 ```text
 v3.0/
 ├── config_v3.py / sadko_v3_config.yaml
-├── elf_lite.py               # 右脑 ELF-Lite (Flow Matching)
+├── hippo_lite.py               # 右脑 Hippo-Lite (Flow Matching)
 ├── fsq.py                    # FSQ 量化器
 ├── router.py                 # 内容寻址 Router
 ├── dynamic_gate.py           # 动态门控网络
 ├── verifier.py               # 左脑校验模块
 ├── diffusion_align.py        # 扩散对齐训练
 ├── model_v3.py               # SADKONativeV3
-├── train_phase1_elf.py       # Phase 1: ELF 预训练
+├── train_phase1_hippo.py       # Phase 1: Hippo 预训练
 ├── train_phase2_fsq.py       # Phase 2: FSQ 离散化
 ├── train_phase3_5_align.py   # Phase 3.5: 机械对齐
 ├── train_phase4_diffusion.py # Phase 4: 扩散对齐

@@ -1,7 +1,7 @@
 # SADKO 右脑 Phase 0 执行手册：生命体征监测基线
 
 > **一句话定位**：Phase 0（FM+FSQ 收敛验证）的执行手册——量化指标、观测频率、死亡线与逃生舱
-> **关联文档**：[elf-graph-emergence.md](./elf-graph-emergence.md)（促生长/证生长理论）· [elf-vs-gdm-review.md](./elf-vs-gdm-review.md) §3.2（四阶段验证总表）
+> **关联文档**：[hippo-graph-emergence.md](./hippo-graph-emergence.md)（促生长/证生长理论）· [hippo-vs-gdm-review.md](./hippo-vs-gdm-review.md) §3.2（四阶段验证总表）
 > **最后更新**：2026-07-29
 
 Phase 0 不是"跑通代码"，而是**建立 SADKO 右脑的"生命体征监测基线"**。如果 Flow Matching 无法稳定地将 KV Cache 映射到 FSQ 码字并精确重构，后续所有关于"图结构"或"事实分离"的实验都是在拟合噪声。
@@ -50,7 +50,7 @@ metrics = {
 ```
 
 - **采样频率**：每 50 步记录一次。Phase 0 的崩溃往往发生在前 500 步。
-- **可视化**：每 500 步对 FSQ 码字做 UMAP 投影。观察是否从"一团混沌"逐渐形成"离散簇"（因子解耦的密码子表结构，而非完整图拓扑——见 [graph-emergence](./elf-graph-emergence.md) §3.2）。若始终均匀一片或几个孤立点，立即干预。
+- **可视化**：每 500 步对 FSQ 码字做 UMAP 投影。观察是否从"一团混沌"逐渐形成"离散簇"（因子解耦的密码子表结构，而非完整图拓扑——见 [graph-emergence](./hippo-graph-emergence.md) §3.2）。若始终均匀一片或几个孤立点，立即干预。
 
 ### Step 3: 分阶段训练与干预策略（Day 3-14）
 

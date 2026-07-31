@@ -455,7 +455,7 @@ class SADKODualPathFFN(nn.Module):
 class SADKOCrossAttention(nn.Module):
     """
     Cross-Attention 骨架 (v1.0 阶段 gate≈0，不参与计算)
-    v2.0 时接入 MemPool，v3.0 时接入 ELF 压缩记忆
+    v2.0 时接入 MemPool，v3.0 时接入 Hippo 压缩记忆
     """
     def __init__(self, config):
         super().__init__()

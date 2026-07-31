@@ -105,7 +105,7 @@ Phase 0 是 v1.0 的**前置许可证**——Phase 0 不通过，禁止启动 v1
 | **核心改造** | Split-GQA + 异构 RoPE + Dual-Path FFN（左脑 AR 改造）| **HRM 分层循环 + Split-GQA 借鉴**（H/L 双时间尺度）|
 | **记忆范式** | MemPool + FSQ 离散化（**压缩即记忆**）| 不做（这是 SADKO 领域）|
 | **循环策略** | 不做（依赖 Cross-Attention 读 SADKO 记忆）| **核心**：K-sweep + 早退 + Radix Cache 多路径 |
-| **核心命题** | AR + ELF 异构双脑能否 work？| HRM 分层循环能否在端侧预算内 work？|
+| **核心命题** | AR + Hippo 异构双脑能否 work？| HRM 分层循环能否在端侧预算内 work？|
 | **任务聚焦** | 文本重建 + 码字检索（记忆）| 推理任务 + 决策任务 |
 
 **关键相似**：两者**都借鉴 Split-GQA + 异构 RoPE**——这是 SADKO 和 HRM 在数学上**独立发现**的同一洞察（双时间尺度），Logos 应主动借鉴。详细同构分析见 [whitepaper.md §2.2](./whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m)。

@@ -1,6 +1,6 @@
-# ELF 独立研究线（ELF Research Line）
+# Hippo 独立研究线（Hippo Research Line，原名 ELF）
 
-> **定位**：LatentMind 项目第三研究线，专门研究 SADKO 右脑（ELF）的关键技术——记忆内容 / KG 压缩生长 / FM 检索提取，独立于 SADKO 64M 验证计划推进，后期通过"胼胝体接口契约"接回 SADKO 主干。
+> **定位**：LatentMind 项目第三研究线，专门研究 SADKO 右脑（Hippo）的关键技术——记忆内容 / KG 压缩生长 / FM 检索提取，独立于 SADKO 64M 验证计划推进，后期通过"胼胝体接口契约"接回 SADKO 主干。
 > **状态**：🆕 2026-07-30 启动
 > **上游 spec**：[docs/superpowers/specs/2026-07-30-elf-research-line-design.md](../../superpowers/specs/2026-07-30-elf-research-line-design.md)
 
@@ -8,7 +8,7 @@
 
 ## 0. 定位声明
 
-- **架构归属**：ELF 仍是 SADKO 右脑机制（双向注意力 + Flow Matching + FSQ），架构不变
+- **架构归属**：Hippo 仍是 SADKO 右脑机制（双向注意力 + Flow Matching + FSQ），架构不变
 - **解耦维度**：验证路径独立——不复用 SADKO 64M Phase 0-8 流水线，三个子方向各自定义最小验证实验
 - **合并路径**：通过本文档 §2 "胼胝体接口契约"接回 SADKO 主干
 - **不复用**：不参考 SADKO 64M 验证计划 / Phase 0-8 流水线的时间表（自定节奏）
@@ -19,7 +19,7 @@
 
 | 方向 | 文件 | 核心问题 |
 |------|------|---------|
-| **方向1：记忆内容架构** | [memory-architecture.md](./memory-architecture.md) | ELF 内部"知识"的最小表示单元是什么？如何支持增量更新不破坏旧知识？ |
+| **方向1：记忆内容架构** | [memory-architecture.md](./memory-architecture.md) | Hippo 内部"知识"的最小表示单元是什么？如何支持增量更新不破坏旧知识？ |
 | **方向2：KG 压缩生长** | [graph-growth.md](./graph-growth.md) | KG 结构如何从训练数据自然涌现？新节点/边如何"生长"？ |
 | **方向3：FM 检索提取** | [retrieval-extraction.md](./retrieval-extraction.md) | Flow Matching 的 ODE 可逆性如何用于检索？Top-K 精度与速度权衡？ |
 
@@ -29,20 +29,20 @@
 
 ## 2. 胼胝体接口契约（Corpus Callosum Contract）
 
-> **核心定义**：胼胝体是 ELF 独立研究线与 SADKO 主干之间的**标准化信息交换接口**。当前为**骨架级契约**（定义接口类别与约束），不锁定具体数值——具体值随 ELF 研究进展更新。
+> **核心定义**：胼胝体是 Hippo 独立研究线与 SADKO 主干之间的**标准化信息交换接口**。当前为**骨架级契约**（定义接口类别与约束），不锁定具体数值——具体值随 Hippo 研究进展更新。
 
 ### 2.1 设计原则
 
-1. **最小化**：只规定 ELF 与 SADKO 必要的解耦面，不约束 ELF 内部研究空间
-2. **稳定性**：ELF 内部机制演进不应频繁破坏接口（接口抽象层 vs 实现细节分层）
-3. **可验证**：每个 ELF 研究成果都能映射到接口契约中的某个槽位
+1. **最小化**：只规定 Hippo 与 SADKO 必要的解耦面，不约束 Hippo 内部研究空间
+2. **稳定性**：Hippo 内部机制演进不应频繁破坏接口（接口抽象层 vs 实现细节分层）
+3. **可验证**：每个 Hippo 研究成果都能映射到接口契约中的某个槽位
 4. **对齐基线**：与 SADKO 白皮书 §2.3（Diffusion Alignment）+ §2.4 决策矩阵兼容
 
 ### 2.2 接口契约五元组（骨架）
 
 | 接口维度 | 类型 | 输入 | 输出 | 演进约束 |
 |---------|------|------|------|---------|
-| **I1. Memory KV** | 张量接口 | ELF 输出的全局语义表示 | `(batch, n_heads, seq_len, head_dim)` 形状的 KV 张量，可被 AR Cross-Attention 读取 | 维度与 AR 的 head_dim 对齐；n_heads 不强求一致 |
+| **I1. Memory KV** | 张量接口 | Hippo 输出的全局语义表示 | `(batch, n_heads, seq_len, head_dim)` 形状的 KV 张量，可被 AR Cross-Attention 读取 | 维度与 AR 的 head_dim 对齐；n_heads 不强求一致 |
 | **I2. Codebook Protocol** | 离散码字协议 | 连续向量 | FSQ 索引序列 `idx ∈ ℕ^L`（如 L=3 表示 [8,8,4] 三级码字）| **冻结码字 ↔ 嵌入映射**对左脑只读；码字数量可扩展（如 256 → 1024 → 4096）|
 | **I3. Retrieval API** | 异步调用接口 | 查询向量 q（来自左脑或外部）| Top-K 相关码字 + 对应 KV；含置信度分数 | Top-K 默认 K=8；延迟约束：端侧 < 5ms（待 SADKO 主干量化后定）|
 | **I4. Incremental Update** | 训练流程接口 | 新知识 KV 输入 | 更新后的码本 + 索引 | 触发条件：新码字招募 / 构象异构 / 模块扩展（见 [sadko/elf-lifecycle.md](../sadko/elf-lifecycle.md)）|
@@ -50,23 +50,23 @@
 
 ### 2.3 关键不变量
 
-无论 ELF 内部如何演进，以下不变量必须保持：
+无论 Hippo 内部如何演进，以下不变量必须保持：
 
 - **INV-1** Memory KV 输出张量形状满足 I1 约束（左脑可读取）
 - **INV-2** Codebook 协议中 `idx → embedding` 映射对左脑**只读冻结**（防止双向修改冲突）
 - **INV-3** Retrieval API 返回值必含置信度（左脑可决定是否信任）
 - **INV-4** Failure Fallback 路径必须存在且默认行为是"安全降级"
-- **INV-5** 接口契约的**变更需双侧 review**（ELF 研究线 owner + SADKO 主干 owner 共同签字）
+- **INV-5** 接口契约的**变更需双侧 review**（Hippo 研究线 owner + SADKO 主干 owner 共同签字）
 
 ### 2.4 演进路径
 
-| 阶段 | 契约状态 | ELF 研究线状态 | 合并方式 |
+| 阶段 | 契约状态 | Hippo 研究线状态 | 合并方式 |
 |------|---------|--------------|---------|
 | **T0（当前）** | 骨架契约（§2.2 + §2.3）| 独立研究，三个方向并行验证 | 尚未合并 |
-| **T+1** | 数值化（维度/形状/范围）| ELF 内部机制初步验证 | 仅 soft 引用，不做硬合并 |
-| **T+2** | 接口实现（reference code）| ELF 三个方向产出 reference implementation | SADKO 64M 可选集成（实验性）|
-| **T+3** | 接口锁定（v1.0 contract）| ELF 三大方向都通过 64M 验证 | SADKO 64M 强制集成（胼胝体启用）|
-| **T+4** | 接口演进（v1.x → v2.0）| ELF 进入规模化（300M+）| SADKO 300M 全量集成 |
+| **T+1** | 数值化（维度/形状/范围）| Hippo 内部机制初步验证 | 仅 soft 引用，不做硬合并 |
+| **T+2** | 接口实现（reference code）| Hippo 三个方向产出 reference implementation | SADKO 64M 可选集成（实验性）|
+| **T+3** | 接口锁定（v1.0 contract）| Hippo 三大方向都通过 64M 验证 | SADKO 64M 强制集成（胼胝体启用）|
+| **T+4** | 接口演进（v1.x → v2.0）| Hippo 进入规模化（300M+）| SADKO 300M 全量集成 |
 
 ### 2.5 与 SADKO 白皮书的兼容性
 
@@ -83,12 +83,12 @@
 
 ### 3.1 核心立场
 
-> **ELF 独立研究线的目标不是产出"最佳性能"，而是产出"鲁棒性评分"与"负结果清单"**。
+> **Hippo 独立研究线的目标不是产出"最佳性能"，而是产出"鲁棒性评分"与"负结果清单"**。
 > 每个机制的"证伪"与"验证"具有同等战略价值。
 
 ### 3.2 五大原则
 
-| # | 原则 | ELF 研究线应用 |
+| # | 原则 | Hippo 研究线应用 |
 |---|------|--------------|
 | **P1** | **消融隔离** | 每个子方向的实验**只改变一个机制变量**，其他保持固定 |
 | **P2** | **强制早停** | 64M 阶段任一指标在 30% 训练进度无改善 → 立即停止，标记"未达阈值" |

@@ -1,8 +1,8 @@
-# ELF Flow Matching 检索提取（FM Retrieval & Extraction）
+# Hippo Flow Matching 检索提取（FM Retrieval & Extraction）
 
 > **方向**：方向 3 / 3（记忆 / KG / 检索）
 > **状态**：🆕 骨架（待填充具体机制设计）
-> **上游 spec**：[elf/README.md §1](./README.md#1-三个并行研究方向)
+> **上游 spec**：[hippo/README.md §1](./README.md#1-三个并行研究方向)
 
 ---
 
@@ -61,7 +61,7 @@ FM 的 ODE 可逆性如何用于检索？ODE 方向如何选择？Top-K 精度�
 
 ## 6. 鲁棒性评分（待填）
 
-[待实施后按 elf/README.md §3.3 评分]
+[待实施后按 hippo/README.md §3.3 评分]
 
 ---
 

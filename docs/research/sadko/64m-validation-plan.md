@@ -48,7 +48,7 @@ Phase 0（共享，~5 周）
 └─ SADKO 64M 启动（L1/L2/L3 三阶段）
    ├─ v1.0：Split-GQA + Dual-Path FFN（左脑改造）
    ├─ v2.0：MemPool + 192 维压缩读取
-   └─ v3.0：ELF-Lite + FSQ + 扩散对齐 + 四大实验
+   └─ v3.0：Hippo-Lite + FSQ + 扩散对齐 + 四大实验
 
 Phase 0 是 SADKO 64M v1.0 / v2.0 / v3.0 的**前置许可证**。
 ```
@@ -56,7 +56,7 @@ Phase 0 是 SADKO 64M v1.0 / v2.0 / v3.0 的**前置许可证**。
 ### SADKO 64M 的特殊需求
 
 **P.0.2 CNN 感知层**对 SADKO 多模态至关重要：
-- SADKO 的 ELF 流形压缩需要 3 层 CNN 作为感知入口
+- SADKO 的 Hippo 流形压缩需要 3 层 CNN 作为感知入口
 - 若 P.0.2 失败，**多模态**作为 SADKO 优势会大打折扣
 
 **P.0.5 评估框架**对 SADKO 决策关键：
@@ -137,7 +137,7 @@ Pretrain (1.2GB 通用语料, ~2h/单卡3090)
 │                                                                         │
 │  v1.0 (基座适配)          v2.0 (记忆压缩)          v3.0 (灵魂注入)      │
 │  ┌──────────────┐       ┌──────────────┐       ┌──────────────┐       │
-│  │ Split-GQA    │       │ Shared       │       │ ELF-Lite     │       │
+│  │ Split-GQA    │       │ Shared       │       │ Hippo-Lite     │       │
 │  │ 异构RoPE     │──────▶│ MemPool      │──────▶│ (Flow Match) │       │
 │  │ Dual-Path FFN│       │ MLP压缩      │       │ FSQ离散化    │       │
 │  │ CA骨架(零初始化)│     │ 192维读取    │       │ 扩散对齐     │       │
@@ -333,14 +333,14 @@ SADKO-Native-64M v2.0 (在 v1.0 基础上新增):
 
 ### 4.1 目标
 
-> **在 v2.0 验证"压缩-读取管线可行"的基础上，引入 SADKO 白皮书的完整右脑（ELF + FSQ）和扩散对齐桥梁，执行五大核心实验（含简化版 Latent MoE），产出《已验证/已证伪机制清单》。**
+> **在 v2.0 验证"压缩-读取管线可行"的基础上，引入 SADKO 白皮书的完整右脑（Hippo + FSQ）和扩散对齐桥梁，执行五大核心实验（含简化版 Latent MoE），产出《已验证/已证伪机制清单》。**
 
 ### 4.2 架构设计（在 v2.0 基础上替换/新增）
 
 ```text
 SADKO-Native-64M v3.0 (在 v2.0 基础上改造):
 │
-├── [替换] Compressor → 右脑 ELF-Lite (~5M):
+├── [替换] Compressor → 右脑 Hippo-Lite (~5M):
 │   ├── 2层 Transformer Encoder (双向注意力, 无因果Mask)
 │   ├── Flow Matching Head (速度场预测)
 │   ├── 输入: 完整 chunk 的 L3+L5 KV (64×768)
@@ -371,7 +371,7 @@ SADKO-Native-64M v3.0 (在 v2.0 基础上改造):
 │   └── 触发: entropy > τ → 二次检索 MemPool
 │
 ├── [新增] 扩散对齐训练接口:
-│   ├── Teacher: ELF-Lite (冻结)
+│   ├── Teacher: Hippo-Lite (冻结)
 │   ├── Student: 左脑 code_embed 层 (FSQ码字→KV嵌入, 256×768, 与 v1.0 semantic_tag 分离)
 │   ├── Loss: 0.3×KL + 0.7×CE
 │   └── 步数: 2000-3000 steps
@@ -383,7 +383,7 @@ SADKO-Native-64M v3.0 (在 v2.0 基础上改造):
 │
 └── 总参数变化 (vs v2.0):
     ├── 移除 MLP Compressor: -0.771M
-    ├── 新增 ELF-Lite: +5.0M
+    ├── 新增 Hippo-Lite: +5.0M
     ├── 新增 FSQ: +0.05M
     ├── 新增 code_embed: +0.196M
     ├── 新增动态门控: +0.15M
@@ -396,13 +396,13 @@ SADKO-Native-64M v3.0 (在 v2.0 基础上改造):
 ### 4.3 训练方案（Phase 0-5 完整流程）
 
 ```text
-Phase 1: 右脑 ELF 预训练 (独立, ~4h)
+Phase 1: 右脑 Hippo 预训练 (独立, ~4h)
   数据: 知识库文本 → MiniMind Prefill → KV Cache
   目标: Flow Matching Loss + 重构 Loss
   验收: 重构 KV 后 PPL 增加 < 5%
 
 Phase 2: FSQ 离散化 (~2h)
-  数据: ELF 编码后的连续潜向量
+  数据: Hippo 编码后的连续潜向量
   目标: 量化误差最小化
   验收: 码字插值语义合理率 ≥ 60%
 
@@ -413,7 +413,7 @@ Phase 3: 机械对齐 (~3h)
   验收: 给定 FSQ 码字，左脑复述 EM > 80%
 
 Phase 4: 扩散对齐 (~2h) ← 注入灵魂
-  Teacher: ELF-Lite (冻结)
+  Teacher: Hippo-Lite (冻结)
   Student: 左脑顶层 + Memory Embedding
   Loss: 0.3×KL + 0.7×CE
   步数: 2000-3000
@@ -478,7 +478,7 @@ Phase 3.5 Rote 基线: EM > 95% ?        ← Rote 是"查字典"严格复述, �
 
 ```text
 ├── sadko_native_v3/
-│   ├── elf_lite.py       # 右脑 ELF-Lite (Flow Matching)
+│   ├── hippo_lite.py       # 右脑 Hippo-Lite (Flow Matching)
 │   ├── fsq.py            # FSQ 量化器
 │   ├── router.py         # 内容寻址 Router
 │   ├── gate.py           # 动态门控网络
@@ -488,7 +488,7 @@ Phase 3.5 Rote 基线: EM > 95% ?        ← Rote 是"查字典"严格复述, �
 │   ├── train_phase1_5.py # Phase 1-5 训练流水线
 │   └── eval_experiments.py # 四大实验评估
 ├── checkpoints/
-│   ├── elf_lite.pt
+│   ├── hippo_lite.pt
 │   ├── fsq_codebook.json
 │   ├── sadko_v3_aligned.pt
 │   └── sadko_v3_sft.pt
@@ -529,7 +529,7 @@ v3.0 四大实验
 | :--- | :--- |
 | **v1.0 不接入任何外部记忆** | Cross-Attention gate=0，确保纯左脑改造无副作用 |
 | **v2.0 不引入 Flow Matching** | 用 MLP 隔离"压缩质量"与"读取管线"两个变量 |
-| **v3.0 不改变 v2.0 的读取管线** | 仅替换压缩器（MLP→ELF）和检索器（Cosine→FSQ Router） |
+| **v3.0 不改变 v2.0 的读取管线** | 仅替换压缩器（MLP→Hippo）和检索器（Cosine→FSQ Router） |
 | **每阶段仅改变一个核心变量** | 消融隔离，严禁多变量联合验证 |
 
 ### 5.3 时间线
@@ -537,7 +537,7 @@ v3.0 四大实验
 ```text
 Week 1-2:  v1.0 (基座适配 + PPL验证)
 Week 3-5:  v2.0 (MemPool + 压缩读取验证)
-Week 6-9:  v3.0 (ELF + FSQ + 扩散对齐 + 四大实验)
+Week 6-9:  v3.0 (Hippo + FSQ + 扩散对齐 + 四大实验)
 Week 10:   产出《验证报告》+ 300M 迁移决策
 ```
 
@@ -549,7 +549,7 @@ Week 10:   产出《验证报告》+ 300M 迁移决策
 
 | 模块 | v2.0 实现 | v3.0 替换为 | 复用部分 |
 | :--- | :--- | :--- | :--- |
-| 压缩器 | MLP (768→192) | ELF-Lite (双向 Transformer + Flow Matching) | 输入/输出接口不变 (768→192) |
+| 压缩器 | MLP (768→192) | Hippo-Lite (双向 Transformer + Flow Matching) | 输入/输出接口不变 (768→192) |
 | 存储 | 连续 mem_k/mem_v (192) | FSQ 码字索引 + 连续潜向量双存储 | Store 结构扩展，不重建 |
 | 检索 | Cosine + Position Bias | FSQ 码本嵌入 Cosine + Position Bias | Position Bias 完全复用 |
 | 读取 | 层专属 192→192 投影 + CA | **完全保留** | 100% 复用 |
@@ -570,7 +570,7 @@ Week 10:   产出《验证报告》+ 300M 迁移决策
 | 5 | 实现 Shared MemPool + Compressor + Indexer | v2.0 | Day 8-12 | mempool.py |
 | 6 | 长上下文训练 + 记忆检索微调 | v2.0 | Day 12-18 | sadko_v2_mem.pt |
 | 7 | 压缩/检索/QA 验收 | v2.0 | Day 19-20 | v2_validation.md |
-| 8 | 实现 ELF-Lite + FSQ | v3.0 | Day 21-25 | elf_lite.py, fsq.py |
-| 9 | Phase 1-4 训练（ELF→FSQ→机械对齐→扩散对齐） | v3.0 | Day 25-35 | sadko_v3_aligned.pt |
+| 8 | 实现 Hippo-Lite + FSQ | v3.0 | Day 21-25 | hippo_lite.py, fsq.py |
+| 9 | Phase 1-4 训练（Hippo→FSQ→机械对齐→扩散对齐） | v3.0 | Day 25-35 | sadko_v3_aligned.pt |
 | 10 | 四大实验（A→B→C→D，消融隔离） | v3.0 | Day 35-45 | 实验报告 |
 | 11 | 产出《验证/证伪清单》+ 300M 迁移决策 | v3.0 | Day 46-50 | 最终报告 |

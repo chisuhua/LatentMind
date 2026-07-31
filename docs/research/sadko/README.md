@@ -1,7 +1,7 @@
 # SADKO 主干研究（SADKO Main Research）
 
 > **定位**：感知 + 记忆 + 知识 + 多模态
-> **架构**：异构双脑（左脑 AR + 右脑 ELF）+ 扩散桥梁
+> **架构**：异构双脑（左脑 AR + 右脑 Hippo）+ 扩散桥梁
 > **状态**：2026-07-29 战略升级后固化（详见 [whitepaper.md](./whitepaper.md)）
 
 ---
@@ -28,28 +28,28 @@
 |------|------|
 | [v1-architecture.md](./v1-architecture.md) | Split-GQA + 异构 RoPE + Dual-Path FFN + CA 骨架预埋 |
 | [v2-architecture.md](./v2-architecture.md) | Shared MemPool + 层专属 Cross-Attention + 压缩触发器 |
-| [v3-architecture.md](./v3-architecture.md) | ELF-Lite + FSQ + 内容寻址 Router + 动态门控 + 扩散对齐 |
+| [v3-architecture.md](./v3-architecture.md) | Hippo-Lite + FSQ + 内容寻址 Router + 动态门控 + 扩散对齐 |
 
-### 1.4 右脑 ELF 核心设计（已固化，与 ELF 独立研究线的关系见各文件）
+### 1.4 右脑 Hippo 核心设计（已固化，与 Hippo 独立研究线的关系见各文件）
 
 | 文件 | 内容 |
 |------|------|
-| [elf-vs-gdm-review.md](./elf-vs-gdm-review.md) | FM vs 图扩散六维裁决 |
-| [elf-graph-emergence.md](./elf-graph-emergence.md) | 图结构涌现机制 |
-| [elf-phase0-manual.md](./elf-phase0-manual.md) | Phase 0 执行手册 |
-| [elf-lifecycle.md](./elf-lifecycle.md) | 右脑生命周期管理 |
+| [hippo-vs-gdm-review.md](./hippo-vs-gdm-review.md) | FM vs 图扩散六维裁决 |
+| [hippo-graph-emergence.md](./hippo-graph-emergence.md) | 图结构涌现机制 |
+| [hippo-phase0-manual.md](./hippo-phase0-manual.md) | Phase 0 执行手册 |
+| [hippo-lifecycle.md](./hippo-lifecycle.md) | 右脑生命周期管理 |
 
 ---
 
 ## 2. 与其他研究线的关系
 
 - **与 Logos 主线**：双轨分工（Logos = 推理 + 决策；SADKO = 感知 + 记忆 + 知识 + 多模态）
-- **与 ELF 独立研究线**：[`../elf/`](../elf/) 是 SADKO 右脑关键技术的独立延伸（自 2026-07-30 起），不复用本目录的 64M 验证计划
+- **与 Hippo 独立研究线**：[`../hippo/`](../hippo/) 是 SADKO 右脑关键技术的独立延伸（自 2026-07-30 起），不复用本目录的 64M 验证计划
 
 ---
 
 ## 3. 维护规范
 
 1. 单主题一个文件，并在本 README §1 登记
-2. 跨文档引用使用相对路径（`./`、`../elf/`、`../logos/`）
+2. 跨文档引用使用相对路径（`./`、`../hippo/`、`../logos/`）
 3. 语言：中文为主，英文技术术语保留
