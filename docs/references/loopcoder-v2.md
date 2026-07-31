@@ -194,7 +194,7 @@ LoopCoder-v2 的核心发现可以**反过来用**——不是"循环越多越�
 
 ### 6.4 SADKO 借鉴
 
-SADKO 的 ELF MemPool（见 [../research/sadko-v2-architecture.md](../research/sadko-v2-architecture.md)）可以借鉴 PLT 的 **G-SWA 共享 KV 机制**——Memory KV 池在"压缩-读取"循环中共享，避免 KV 缓存随循环次数增长。
+SADKO 的 Hippo MemPool（见 [../research/sadko-v2-architecture.md](../research/sadko-v2-architecture.md)）可以借鉴 PLT 的 **G-SWA 共享 KV 机制**——Memory KV 池在"压缩-读取"循环中共享，避免 KV 缓存随循环次数增长。
 
 ---
 

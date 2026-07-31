@@ -2,7 +2,7 @@
 
 > **定位**：LatentMind 项目第三研究线，专门研究 SADKO 右脑（Hippo）的关键技术——记忆内容 / KG 压缩生长 / FM 检索提取，独立于 SADKO 64M 验证计划推进，后期通过"胼胝体接口契约"接回 SADKO 主干。
 > **状态**：🆕 2026-07-30 启动
-> **上游 spec**：[docs/superpowers/specs/2026-07-30-elf-research-line-design.md](../../superpowers/specs/2026-07-30-elf-research-line-design.md)
+> **上游 spec**：[docs/superpowers/specs/2026-07-30-hippo-research-line-design.md](../../superpowers/specs/2026-07-30-hippo-research-line-design.md)
 
 ---
 
@@ -23,7 +23,7 @@
 | **方向2：KG 压缩生长** | [graph-growth.md](./graph-growth.md) | KG 结构如何从训练数据自然涌现？新节点/边如何"生长"？ |
 | **方向3：FM 检索提取** | [retrieval-extraction.md](./retrieval-extraction.md) | Flow Matching 的 ODE 可逆性如何用于检索？Top-K 精度与速度权衡？ |
 
-**并行性**：三方向最小验证单元可完全独立——见 [上游 spec §3.5](../../superpowers/specs/2026-07-30-elf-research-line-design.md#35-三个方向的依赖关系与并行性)
+**并行性**：三方向最小验证单元可完全独立——见 [上游 spec §3.5](../../superpowers/specs/2026-07-30-hippo-research-line-design.md#35-三个方向的依赖关系与并行性)
 
 ---
 
@@ -45,7 +45,7 @@
 | **I1. Memory KV** | 张量接口 | Hippo 输出的全局语义表示 | `(batch, n_heads, seq_len, head_dim)` 形状的 KV 张量，可被 AR Cross-Attention 读取 | 维度与 AR 的 head_dim 对齐；n_heads 不强求一致 |
 | **I2. Codebook Protocol** | 离散码字协议 | 连续向量 | FSQ 索引序列 `idx ∈ ℕ^L`（如 L=3 表示 [8,8,4] 三级码字）| **冻结码字 ↔ 嵌入映射**对左脑只读；码字数量可扩展（如 256 → 1024 → 4096）|
 | **I3. Retrieval API** | 异步调用接口 | 查询向量 q（来自左脑或外部）| Top-K 相关码字 + 对应 KV；含置信度分数 | Top-K 默认 K=8；延迟约束：端侧 < 5ms（待 SADKO 主干量化后定）|
-| **I4. Incremental Update** | 训练流程接口 | 新知识 KV 输入 | 更新后的码本 + 索引 | 触发条件：新码字招募 / 构象异构 / 模块扩展（见 [sadko/elf-lifecycle.md](../sadko/elf-lifecycle.md)）|
+| **I4. Incremental Update** | 训练流程接口 | 新知识 KV 输入 | 更新后的码本 + 索引 | 触发条件：新码字招募 / 构象异构 / 模块扩展（见 [sadko/hippo-lifecycle.md](../sadko/hippo-lifecycle.md)）|
 | **I5. Failure Fallback** | 降级协议 | 检索失败 / 码本饱和 | 退化到默认值（具体值由实现决定，示例：空 KV + 全 0 嵌入）| 必须支持静默降级，不抛异常 |
 
 ### 2.3 关键不变量
@@ -115,18 +115,18 @@
 
 ---
 
-## 4. 与 `sadko/elf-*.md` 文档的关系
+## 4. 与 `sadko/hippo-*.md` 文档的关系
 
-本目录下的研究是 SADKO-ELF 既有研究的**独立延伸**（自 2026-07-30 起），不复用 SADKO 64M 验证计划。
+本目录下的研究是 SADKO-Hippo 既有研究的**独立延伸**（自 2026-07-30 起），不复用 SADKO 64M 验证计划。
 
-| 已有 SADKO-ELF 文档 | 位置 | 在本目录中的引用方式 |
+| 已有 SADKO-Hippo 文档 | 位置 | 在本目录中的引用方式 |
 |------------------|------|---------------------|
-| [elf-vs-gdm-review.md](../sadko/elf-vs-gdm-review.md) | `sadko/` | **前置依据**：FM 路线裁决（已选定 FM）|
-| [elf-graph-emergence.md](../sadko/elf-graph-emergence.md) | `sadko/` | **前置依据**：图结构涌现的哲学论证 |
-| [elf-phase0-manual.md](../sadko/elf-phase0-manual.md) | `sadko/` | **前置依据**：FM+FSQ 基础实验手册 |
-| [elf-lifecycle.md](../sadko/elf-lifecycle.md) | `sadko/` | **前置依据**：增量更新三模式定义 |
+| [hippo-vs-gdm-review.md](../sadko/hippo-vs-gdm-review.md) | `sadko/` | **前置依据**：FM 路线裁决（已选定 FM）|
+| [hippo-graph-emergence.md](../sadko/hippo-graph-emergence.md) | `sadko/` | **前置依据**：图结构涌现的哲学论证 |
+| [hippo-phase0-manual.md](../sadko/hippo-phase0-manual.md) | `sadko/` | **前置依据**：FM+FSQ 基础实验手册 |
+| [hippo-lifecycle.md](../sadko/hippo-lifecycle.md) | `sadko/` | **前置依据**：增量更新三模式定义 |
 
-**原则**：已有文档是 SADKO 时期固化研究成果，作为历史技术依据保留原位；本目录下的研究是 SADKO-ELF 的**未来独立演进**。
+**原则**：已有文档是 SADKO 时期固化研究成果，作为历史技术依据保留原位；本目录下的研究是 SADKO-Hippo 的**未来独立演进**。
 
 ---
 

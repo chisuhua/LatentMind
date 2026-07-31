@@ -39,7 +39,7 @@ KG 结构如何从训练数据自然涌现？码字间关联如何形成图边�
 
 ## 4. 前置依赖
 
-- [`sadko/elf-graph-emergence.md`](../sadko/elf-graph-emergence.md)（涌现的哲学论证）
+- [`sadko/hippo-graph-emergence.md`](../sadko/hippo-graph-emergence.md)（涌现的哲学论证）
 - 可选：[`memory-architecture.md`](./memory-architecture.md) 方向的部分输出
 
 ---

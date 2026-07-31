@@ -43,7 +43,7 @@ FM 的 ODE 可逆性如何用于检索？ODE 方向如何选择？Top-K 精度�
 
 ## 4. 前置依赖
 
-- [`sadko/elf-phase0-manual.md`](../sadko/elf-phase0-manual.md)（FM+FSQ 基础）
+- [`sadko/hippo-phase0-manual.md`](../sadko/hippo-phase0-manual.md)（FM+FSQ 基础）
 - 可选：[`memory-architecture.md`](./memory-architecture.md) 的码字 schema
 - 可选：[`graph-growth.md`](./graph-growth.md) 的图查询 API
 

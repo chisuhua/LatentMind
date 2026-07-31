@@ -39,8 +39,8 @@ Hippo 内部"知识"的最小表示单元是什么？知识如何在压缩空间
 
 ## 4. 前置依赖
 
-- [`sadko/elf-vs-gdm-review.md`](../sadko/elf-vs-gdm-review.md)（FM 路线已选）
-- [`sadko/elf-lifecycle.md`](../sadko/elf-lifecycle.md)（增量模式定义）
+- [`sadko/hippo-vs-gdm-review.md`](../sadko/hippo-vs-gdm-review.md)（FM 路线已选）
+- [`sadko/hippo-lifecycle.md`](../sadko/hippo-lifecycle.md)（增量模式定义）
 
 ---
 

@@ -229,7 +229,7 @@ references/
 1. **K-sweep 降级**：从阻塞性前置 → Plan B 条件性实验（[RFC-0001](../rfcs/RDD-0001-k-sweep-experiment.md)）
 2. **SADKO 路线从"文本认知"升级为"多模态流形记忆"**（基于第一性原理：双向 + Flow Matching + FSQ 天然为流形设计）
 3. **双轨分工**正式确立：Logos = 推理+决策，SADKO = 感知+记忆+知识+多模态
-4. **融合接口**：ELF Memory KV → HRM Cross-Attention 单点（"HRM 是大脑皮层，ELF 是海马体"）
+4. **融合接口**：Hippo Memory KV → HRM Cross-Attention 单点（"HRM 是大脑皮层，Hippo 是海马体"）
 
 **架构意义**：循环与多模态是**互补**而非竞争的两条路线
 - 循环是**推理工具**（latent space 内的逻辑推演）→ Logos 主线
