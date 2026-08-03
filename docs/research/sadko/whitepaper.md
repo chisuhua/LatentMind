@@ -52,6 +52,36 @@ SADKO 彻底摒弃了"单脑均匀膨胀"的传统范式，确立了三大底层
 
 详细论证见 [multimodal-native.md](./multimodal-native.md)（2026-07-29 增补）。
 
+### 1.5 外部研究参考 — DiscoLoop 哲学同源声明（2026-07-31 增补）
+
+> 📌 **保守声明**：本节为**架构灵感参考登记**，**不是** SADKO 设计的验证证据。
+
+**DiscoLoop 论文**（[Fu et al., arXiv:2607.00341, 2026](https://arxiv.org/abs/2607.00341)；详见 [docs/references/discoloop.md](../../references/discoloop.md)）提出循环 Transformer 的"双通道"概念——同时携带连续隐状态与离散嵌入通道，解决"循环内表征错位"问题。
+
+**SADKO 与 DiscoLoop 的同源点**：
+| 维度 | SADKO 异构双脑 | DiscoLoop 双通道 |
+|------|----------------|------------------|
+| 连续表达 | AR 左脑连续 logits | Hidden state H |
+| 离散锚定 | Hippo FSQ 码本（[8,8,4] = 256）| LM vocab soft expectation |
+| 通道协同 | 双脑独立模块 + 扩散桥梁对齐 | 残差相加 + Φ soft decode |
+| 训练时对齐 | Teacher-Student 蒸馏（§2.3）| 端到端学习（无显式蒸馏）|
+
+**重要澄清**：
+- ✅ SADKO 与 DiscoLoop 在"**连续 + 离散双通道**"哲学方向上**同源**
+- ✅ DiscoLoop 提供了"双通道在循环场景下的有效性"的间接先例
+- ❌ DiscoLoop **不构成** SADKO 双脑设计的**直接验证证据**——DiscoLoop 的实验是 440M 单 block tied embedding，**与 SADKO 异构模块架构不可直接互证**
+- ❌ DiscoLoop **未证明** FSQ 必要性——其论文用的是 LM 词汇，不是 FSQ
+
+**对 SADKO 64M 验证计划的影响**：
+- SADKO 64M 四大实验（[§四](#四-工程验证协议64m-机制证伪-基于-minimind3)）仍是 SADKO 设计独立证伪/验证的**唯一依据**
+- DiscoLoop 提供的仅是"双通道架构的间接先例"，**不改变** 64M 实验设计的判定线
+- 若 64M 实验 A-D 全部失败，**不能**用 DiscoLoop 哲学同源作为保留设计的理由
+
+**SADKO 借鉴层级判定**（Oracle 评审）：
+- **架构**：独立设计，**不借鉴** DiscoLoop 具体实现（双脑模块 vs 残差相加通道）
+- **哲学**：同源，可**共享**"双通道"哲学立场
+- **验证**：独立，**不可互证**
+
 ---
 
 ## 二、 架构蓝图与核心组件 (Architecture Blueprint)

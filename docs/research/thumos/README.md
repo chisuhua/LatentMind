@@ -123,6 +123,38 @@ V4 议题（`docs/research/four-lines-synthesis.md`）中"**三 Session 架构 +
 | **Hippo 胼胝体契约**（I1-I5 + INV-1~5）| 平行关系。Hippo 契约管"模型 ↔ 模型"信息流；Hermes 契约管"模型 ↔ 外部 agent"信息流。两者在 H3 (Trigger Signal) 处有交集——Trigger 可源自 Hippo 的检索置信度（I3 Retrieval API 返回值）。 |
 | **SADKO 胼胝体对齐**（白皮书 §2.3）| Thumos 的 Join Mode Vector 中 Hard Join（Control Token）可能复用 SADKO 的扩散对齐信号 |
 
+### 2.6 外部研究参考 — DiscoLoop 哲学共鸣声明（2026-07-31 增补）
+
+> 📌 **保守声明**：本节为**哲学立场登记**，**不是** Thumos 设计验证证据。
+
+**DiscoLoop 论文**（[Fu et al., arXiv:2607.00341, 2026](https://arxiv.org/abs/2607.00341)；详见 [docs/references/discoloop.md](../../references/discoloop.md)）的核心立场是"**外部推理能力内化为循环结构**"——让多跳推理不需要外显 CoT，直接在循环内部完成。
+
+**Thumos 与 DiscoLoop 的哲学共鸣点**：
+- DiscoLoop："多跳推理内化为循环结构模式"（让外部 CoT 变成循环内部 latent computation）
+- Thumos："agent 能力内化为模型循环动力学"（让外部 agent 协调变成循环内部 intent/fork-join/trigger）
+
+两者共享同一哲学立场——**原本属于外部的能力，可成为模型自身的循环结构模式**。
+
+**重要澄清**：
+- ✅ Thumos 与 DiscoLoop 在"**内化能力**"哲学方向上**共鸣**
+- ✅ DiscoLoop 提供了"内化机制存在可行路径"的间接先例
+- ❌ DiscoLoop **不构成** Thumos agent 内化假设的**直接验证证据**
+  - DiscoLoop 研究对象：latent multi-hop composition（潜空间内的多步推理组合）
+  - Thumos 研究对象：tools / sessions / handoff protocols（外部 agent 协同）
+- ❌ DiscoLoop **不证明** Intent/Fork-Join/Trigger 等具体机制的可行性
+
+**对 Thumos 64M 验证计划的影响**：
+- Thumos 64M 三大方向验证（[four-lines-synthesis §6.5](../four-lines-synthesis.md#65-thumos-64m-研究)）仍是 Thumos 设计独立证伪/验证的**唯一依据**
+- DiscoLoop 提供的仅是"内化哲学的间接先例"，**不改变** 内化 vs 外化对比实验的判定线
+- 若 64M 内化 vs 外化对比显示内化不优于外化，**不能**用 DiscoLoop 哲学共鸣作为保留 Thumos 假设的理由
+
+**Thumos 借鉴层级判定**（Oracle 评审）：
+- **架构**：独立设计，**不借鉴** DiscoLoop 具体实现
+- **哲学**：共鸣，可**共享**"内化能力"立场
+- **验证**：独立，**不可互证**
+
+---
+
 ---
 
 ## 3. 验证哲学（继承项目原则）
@@ -206,6 +238,7 @@ V4 议题中"三 Session + Fork/Join + 智能触发"在不同视角下的归属�
 | [docs/research/hippo/README.md](../hippo/README.md) | Hippo 独立研究线（含胼胝体契约参考）|
 | [docs/research/sadko/whitepaper.md](../sadko/whitepaper.md) | SADKO 异构双脑 + 扩散桥梁 |
 | [docs/research/logos/whitepaper.md](../logos/whitepaper.md) | Logos 主线 H/L 循环 |
+| [docs/references/discoloop.md](../../references/discoloop.md) | **DiscoLoop 论文笔记**（§2.6 哲学共鸣参考）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略（Thumos 是其扩展）|
 | [docs/references/projects.md](../../references/projects.md) | HydraForge / AgenticLlama 项目卡片 |
 | [docs/implementation/phase-0-implementation-guide.md](../../implementation/phase-0-implementation-guide.md) | Phase 0 共享前置（Thumos 也需复用）|
