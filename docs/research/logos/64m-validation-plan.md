@@ -2,7 +2,7 @@
 
 > **一句话定位**：Logos 主线的 64M 起点——从 MiniMind3 64M Dense 基座改造为 Logos H/L 全新架构，**完全从零训练**，验证三大核心机制（双时间尺度、Per-Token 早退、多轨迹并行）。
 > **性质**：Logos 主线 **v1.0 起点**的关键验证计划
-> **最后更新**：2026-07-29（v1.2：调整为"起点"定位，明确"从零训练"）
+> **最后更新**：2026-07-31（v1.3：新增 §3.5 表征对齐探针，回应 DiscoLoop 调研）
 > **上游文档**：[whitepaper.md](./whitepaper.md)（架构设计）
 > **下游文档**：[v1-architecture.md](./v1-architecture.md) / [v2-architecture.md](./v2-architecture.md) / [v3-architecture.md](./v3-architecture.md)
 
@@ -168,6 +168,76 @@ Phase 0 是 v1.0 的**前置许可证**——Phase 0 不通过，禁止启动 v1
 - **周期**：2-3 周
 - **硬件**：单卡 RTX 3090 24GB
 - **训练数据**：从零训练（不复用 MiniMind3 权重），数据可参考 MiniMind3 原始 Pretrain
+
+### 3.5 表征对齐探针（DiscoLoop 诊断实验）🆕 v1.3
+
+> 📌 **2026-07-31 新增**：本节源自 DiscoLoop 调研（详见 [discoloop.md](../../references/discoloop.md)）的 Oracle 评审建议——在 v1.0 baseline 稳定后、v2.0 策略对比前，**先测量** H/L 循环是否面临"表征错位"，再决定是否引入 Φ 通道。
+
+#### 3.5.1 核心命题
+
+**H/L 循环在 OOD 多跳推理上是否面临表征错位（cosine sim < 0.3）？** 若错位显著（cosine < 0.5 ID 或 < 0.4 OOD），Φ 通道是必需修复；若不显著，**不引入** Φ 避免过度架构化。
+
+> ⚠️ **Oracle 警示**：DiscoLoop 的表征错位结论限定在 tied embedding + 单 block + 串行循环的符号化两跳任务。Logos 用独立 H/L 模块 + 加法注入 + untied head，**不能直接假设** 错位存在。
+
+#### 3.5.2 四组对比实验
+
+| 实验 | 配置 | 目的 |
+|------|------|------|
+| **A: H/L baseline** | 当前 Logos v1.0 baseline（A.3 混合风格）| 对照——测量 baseline 的 cosine sim 与 OOD 准确率 |
+| **B: Hard 训练-free 干预** | Loop 1→2 间注入 `argmax → E(argmax)`（仅在已知桥接位置）| **因果验证**——若 OOD 跃升则证实错位存在（无需训练）|
+| **C: Soft Φ(H) at H-boundary** | 学习 α + Φ soft decode-then-encode，仅在 H 循环边界注入 | DiscoLoop 完整机制（440M 论文级实现）|
+| **D: Shuffled embedding 对照** | C 的 Φ 但 W 矩阵随机置换（保留形状，打乱语义）| **证伪实验**——若 D ≪ C 则收益来自真实离散锚点而非通道本身 |
+
+#### 3.5.3 测量指标
+
+| 指标 | 计算方式 | 通过标准 | 触发动作 |
+|------|---------|:---:|------|
+| **桥接实体 LM 概率** | per-token 线性探针解码桥接实体 | ≥ 0.8 | 低于 0.5 → 标记 "机制未学会" |
+| **隐状态 vs 嵌入余弦相似度** | per-boundary cosine(h, E(argmax)) | **ID ≥ 0.5** | OOD < 0.4 → 标记"错位显著" |
+| **OOD 多跳准确率** | entity-disjoint 2-hop + 3-hop 任务 | ID/OOD 差距 < 15% | 差距 > 30% → 标记"Vanilla 失败" |
+| **α gate 分布** | per-token α 的均值 / 熵 | 熵 > 1.0（不全 0/1）| 熵 < 0.5 → 标记"gate 坍缩" |
+| **Effective rank** | 隐状态矩阵的 rank-1 占比 | > 0.4（防 STARS 式崩溃）| < 0.2 → 标记"rank 坍缩" |
+| **平均早退 K** | per-token 早退触发步数 | ≤ 3 | > 5 → 标记"早退失效" |
+| **单 token 延迟** | 端侧推理 ms | ≤ 200ms（K=2）| > 300ms → 标记"端侧不可行" |
+| **Token 翻转率** | 训练 step 间 top-token 变化率 | < 20%（量化稳定性 proxy） | > 40% → 标记"需 FP16 保护" |
+
+#### 3.5.4 实验时序与门禁
+
+```
+v1.0 A.1-A.4 baseline 通过（§3）
+   ↓
+实验 A：H/L baseline 表征探针（先测量）
+   ├─ cosine ID ≥ 0.5 且 OOD ≥ 0.4 → **不引入 Φ**（错位不显著）
+   └─ cosine OOD < 0.4 → 进入实验 B/C/D
+       ↓
+实验 B：Hard 干预（验证错位因果）
+   ├─ OOD 准确率 ≪ baseline → **错位不显著**（B 失败，转 D 作 sanity）
+   └─ OOD 准确率 ≈ A → **错位显著**（进入 C）
+       ↓
+实验 C：Soft Φ(H)（DiscoLoop 完整实现）
+   ├─ C ≫ A + C ≈ 理想值 → 引入 Φ 至 Logos 架构（v1.4+）
+   └─ C ≈ A → 错位存在但 Φ 无效（需诊断）
+       ↓
+实验 D：Shuffled 对照（证伪）
+   └─ D ≪ C → Φ 收益来自真实离散锚点（机制有效）
+       └─ D ≈ C → Φ 收益只是通道容量（机制可疑）
+```
+
+#### 3.5.5 周期与资源
+
+- **周期**：1 周（4 组实验用同一训练好的 baseline，仅探针 + 注入）
+- **硬件**：单卡 RTX 3090 24GB（与 v1.0 共享）
+- **数据集**：entity-disjoint 两跳/三跳合成任务（小规模，< 10k 样本）
+- **依赖**：必须等 v1.0 baseline 训练完成后启动
+
+#### 3.5.6 实现决策（开始前必须锁定）
+
+| 决策 | 选项 | 推荐 |
+|------|------|------|
+| Tied vs Untied embedding | (a) tied（贴 DiscoLoop） (b) untied（贴 Logos 现状） | **(b) untied**——Oracle 警示 untied 可能天然缓解错位，需独立测量 |
+| Φ 注入位置 | (a) 每 H/L 边界 (b) 仅 H 循环边界 (c) 仅 L 循环边界 | **(b) 仅 H 边界**——Oracle 推荐，避免每 L 注入的计算开销 |
+| 温度 τ | (a) 固定 1.0 (b) 可学习 | **(a) 固定 1.0**——Oracle 警示 τ 敏感性，先固定排除干扰 |
+| 激活精度 | (a) 全 FP16 (b) 投影/softmax/Φ FP16，其他 INT8 | **(a) 全 FP16**——INT8 误差会逐跳累积，先排除量化干扰 |
 
 ---
 
@@ -416,10 +486,11 @@ Week 10+:   交付《Logos 64M 验证报告》
 | [v3-architecture.md](./v3-architecture.md) | v3.0 多轨迹并行详细施工图 |
 | [sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md) | SADKO 64M 验证计划（并行路线）|
 | [docs/research/sadko/v1-architecture.md](../sadko/v1-architecture.md) | SADKO Split-GQA 详细实现（v1.0 A.2 借鉴）|
+| [discoloop.md](../../references/discoloop.md) | **DiscoLoop 论文笔记**（§3.5 探针设计的灵感来源与边界）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 
 ---
 
-**最后更新**：2026-07-29（v1.2 重大调整：调整为"起点"定位）
+**最后更新**：2026-07-31（v1.3 新增 §3.5 表征对齐探针）
 **作者**：来自工作流（Logos 64M 起点验证计划）
-**版本**：v1.2
+**版本**：v1.3
