@@ -20,6 +20,7 @@
 | [huginn.md](./huginn.md) | **Huginn 3.5B 笔记**（latent recurrent 反例：50 步循环仍 work）| 🟡 重要 | ✅ 新增 2026-07-29 |
 | [stars.md](./stars.md) | **STARS 2026 笔记**（循环崩溃的 LayerNorm 根因 + Jacobian 谱半径修复）| 🟡 重要 | ✅ 新增 2026-07-29 |
 | [per-token-convergence.md](./per-token-convergence.md) | **Per-Token Fixed-Point 笔记**（90% token 6 步收敛，10% 需要 8 步——动态 K 证据）| 🟡 重要 | ✅ 新增 2026-07-29 |
+| [discoloop.md](./discoloop.md) | **DiscoLoop 笔记**（UC Berkeley + Princeton，2607.00341，2026-07）——表征错位根因 + 双通道修复（架构参考，非核心依赖）| 🟡 参考 | ✅ 新增 2026-07-31 |
 | [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
 | [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
 
@@ -145,6 +146,7 @@ references/
 | 循环崩溃的根因？怎么修？ | [stars.md](./stars.md) §3 / §4 |
 | 90% token 6 步就够，10% 需要 8 步？ | [per-token-convergence.md](./per-token-convergence.md) §3 |
 | HRM-Text 的 K=8 假设是否成立？ | [loopcoder-v2.md §6.1](./loopcoder-v2.md#61-主线hrm-text-需要的前置实验) + [rrm-survey.md §5](./rrm-survey.md#5-与-latentmind-决策相关) |
+| **循环 Transformer 多跳推理 OOD 失败的"表征几何"根因？** | **[discoloop.md](./discoloop.md) §3.1 / §6.1** |
 
 ### 3.8 我想查看论文原文 PDF/HTML → 去哪查
 
@@ -180,6 +182,7 @@ references/
 - ✅ **LoopCoder-v2 / PLT**（arXiv:2606.18023）→ 笔记：[loopcoder-v2.md](./loopcoder-v2.md)
 - ✅ **STARS 2026**（ICML 2026，arXiv 待补）→ 笔记：[stars.md](./stars.md)
 - ✅ **Per-Token Convergence**（2026-07，arXiv 待补）→ 笔记：[per-token-convergence.md](./per-token-convergence.md)
+- ✅ **DiscoLoop**（arXiv:2607.00341v2）→ 笔记：[discoloop.md](./discoloop.md)
 
 ### 4.3 待补充（外部源）
 
