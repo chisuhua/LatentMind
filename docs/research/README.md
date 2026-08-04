@@ -1,8 +1,8 @@
 # 内部研究记录索引（docs/research/）
 
-> **组织形式**：四研究线（Logos / SADKO / Hippo / Thumos）+ 顶级综合脉络 + 顶级索引
+> **组织形式**：四研究线（Logos / SADKO / Hippo / Thumos）+ 顶级综合脉络 + 顶级调研 + 顶级索引
 > **战略定位**：与项目"双轨 + 探索分支"哲学一致，并扩展为"双轨 + 两条独立研究线"
-> **最后更新**：2026-07-31（新增 Thumos 第四研究线 + 四线综合脉络文档）
+> **最后更新**：2026-07-31（新增循环+记忆系统文献谱系）
 
 ---
 
@@ -22,6 +22,9 @@
 
 **四线综合脉络**：见 [`four-lines-synthesis.md`](./four-lines-synthesis.md)（含 V4 议题归并 + 每线 64M 研究内容 + 跨线协调）
 
+**跨方向文献谱系**：
+- [`loop-memory-survey.md`](./loop-memory-survey.md) — 循环 Transformer + 持久记忆系统 文献谱系（澄清 Loop A/B/C 三种循环维度）
+
 ---
 
 ## 1. 目录组织
@@ -30,6 +33,7 @@
 docs/research/
 ├── README.md                # 本文件（顶级四研究线索引）
 ├── four-lines-synthesis.md  # 四线综合脉络（V4 议题归并 + 跨线协调）[2026-07-31 新增]
+├── loop-memory-survey.md    # 循环+记忆系统文献谱系（Loop A/B/C 分类）[2026-07-31 新增]
 ├── REFACTOR_MAP.md          # 2026-07-30 重构时的引用清单（实施产物）
 │
 ├── sadko/                   # SADKO 主干研究
@@ -62,6 +66,7 @@ docs/research/
 - **Hippo 独立研究线**：见 [`hippo/README.md`](./hippo/README.md)（含胼胝体接口契约五元组）
 - **Thumos 独立研究线**：见 [`thumos/README.md`](./thumos/README.md)（含赫尔墨斯接口契约六元组）
 - **四线综合脉络**：见 [`four-lines-synthesis.md`](./four-lines-synthesis.md)（V4 议题归并 + 64M 研究内容 + 跨线协调）
+- **循环+记忆系统调研**：见 [`loop-memory-survey.md`](./loop-memory-survey.md)（Loop A/B/C 分类 + 完整文献谱系 + 对项目启示）
 
 ---
 
@@ -86,4 +91,5 @@ docs/research/
 5. **语言**：中文为主，英文技术术语保留
 6. **目录重构记录**：
    - 2026-07-30 三子目录重构详见 [REFACTOR_MAP.md](./REFACTOR_MAP.md)
-   - 2026-07-31 新增 Thumos 第四研究线 + four-lines-synthesis.md（本次）
+   - 2026-07-31 新增 Thumos 第四研究线 + four-lines-synthesis.md
+   - 2026-07-31 新增 loop-memory-survey.md（循环+记忆系统文献谱系）
