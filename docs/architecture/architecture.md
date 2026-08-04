@@ -61,6 +61,8 @@ H/L 双时间尺度（数学同构于 Split-GQA 的异构 RoPE）：
 - MagicNorm 思想（前向 PostNorm + 反向 PreNorm）
 - Per-Token 早退（动态 K 调度）
 - PLT 风格并行化（用于端侧 K>4 推理）
+- **L-PLT**（可选，条件启动）：L 循环完整 PLT position shift，端侧延迟 -33%（详见 [research/logos/k-strategy.md §2.2](../research/logos/k-strategy.md)）
+- **PLT + Φ 集成**（可选）：Φ 通道解决 PLT 跨位置对齐错位（详见 [research/logos/k-strategy.md §2.2.7](../research/logos/k-strategy.md)）
 
 ### 2.3 模块 C：双流解码层（~100M）
 
@@ -133,8 +135,45 @@ ChipForge APU
 | ❌ "K 值是核心决策" | ✅ K 值是超参数，由 64M 验证决定 |
 | ❌ "64M 是验证阶段" | ✅ 64M 是起点，逐步扩展到 1B/1.5B |
 | ❌ "直接用 HRM-Text 集成" | ✅ 借鉴 HRM-Text 的循环思想，独立设计 |
+| ❌ "项目只有双轨（Logos + SADKO）" | ✅ **四研究线**：Logos + SADKO + Hippo + Thumos |
+| ❌ "循环 Transformer 只需要调 K" | ⚠️ 还需测**表征错位**（DiscoLoop §3.5）与 **PLT 跨位置对齐**（§4.6）|
+| ❌ "持久记忆 = 只做 KV 缓存" | ✅ 需调研 Loop B 流派（7 篇，见 [research/loop-memory-survey.md](../research/loop-memory-survey.md)）|
+| ❌ "K=8 端侧必然不可行" | ⚠️ 需评估 L-PLT（延迟 -33%）+ Loop B fallback |
 
 ---
 
-**版本**：v1.2
-**最后更新**：2026-07-29
+## 7. 四研究线架构总览
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                      LatentMind（认知核）                             │
+│                                                                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
+│  │  Logos   │  │  SADKO   │  │  Hippo   │  │  Thumos  │            │
+│  │  主线     │  │  探索分支 │  │ 独立研究线 │  │ 独立研究线 │            │
+│  │ 推理决策  │  │ 感知记忆  │  │ 记忆/KG/检索│  │ agent 内化│            │
+│  │ H/L 循环  │  │ 双脑+FM  │  │ FSQ+FM   │  │ 三Session │            │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘            │
+│       │             │             │             │                    │
+│       └─────────────┴──────┬──────┴─────────────┘                    │
+│                            ↓                                         │
+│  ┌──────────────────────────────────────────────────────┐           │
+│  │          融合接口（远期 +12 月）                      │           │
+│  │  Logos Cross-Attn ← Hippo Memory KV（'皮层←海马体'） │           │
+│  │  Thumos 赫尔墨斯契约 ←→ HydraForge（外部 agent）     │           │
+│  └──────────────────────────────────────────────────────┘           │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**四线关系**（详见 [research/four-lines-synthesis.md](../research/four-lines-synthesis.md)）：
+- **Logos ↔ SADKO**：双轨分工（推理决策 vs 感知记忆）
+- **Logos ↔ Hippo**：间接消费（Hippo Memory KV → Logos Cross-Attention）
+- **SADKO ↔ Hippo**：核心 vs 延伸（Hippo 是 SADKO 右脑技术独立验证）
+- **Logos ↔ Thumos**：扩展（Thumos 内化编排作用在 Logos 主干之上）
+- **SADKO ↔ Thumos**：互补（胼胝体管模型↔模型，赫尔墨斯管模型↔外部）
+- **Hippo ↔ Thumos**：消费（Thumos 双层触发 L1 信号可源自 Hippo 检索置信度）
+
+---
+
+**版本**：v1.3
+**最后更新**：2026-07-31（四研究线格局 + PLT/Φ 机制 + §7 架构总览）
