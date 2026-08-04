@@ -365,19 +365,45 @@
 
 ---
 
-## 7. 未来待添加论文笔记（推荐顺序）
+## 7. 文献调研完成度（2026-07-31 更新）
 
-> 这些论文补全 Loop B 维度，是项目下一阶段调研的重点
+> 本节追踪 Loop B 完整文献谱系的调研完成度。已完成笔记标 ✅，未完成标 ⏳。
 
-| 论文 | 调研优先级 | 对项目价值 |
+### 7.1 已完成（Loop B 6 个核心流派全覆盖）
+
+| # | 论文 | 年份 | 流派 | 笔记 | 状态 |
+|---|------|------|------|------|------|
+| 1 | **Memorizing Transformers** (Google) | 2022 | kNN 检索 | [memorizing-transformers.md](../references/memorizing-transformers.md) | ✅ |
+| 2 | **Compressive Transformers** (DeepMind) | 2019/2020 | 1D Conv 压缩 | [compressive-transformers.md](../references/compressive-transformers.md) | ✅ |
+| 3 | **StreamingLLM** (MIT+Meta) | 2023/2024 | 滑动窗口 + attention sink | [streaming-llm.md](../references/streaming-llm.md) | ✅ |
+| 4 | **InfLLM** (THU+MIT+Meta) | 2024 | 块级 memory + 训练无关 | [inf-llm.md](../references/inf-llm.md) | ✅ |
+| 5 | **AutoCompressors** (Princeton) | 2023 | LLM 自压缩 + summary accumulation | [auto-compressors.md](../references/auto-compressors.md) | ✅ |
+| 6 | **RMT** (MIPT+AIRI) | 2022 | 特殊 [mem] tokens + BPTT 跨段 | [rmt.md](../references/rmt.md) | ✅ |
+| 7 | **Landmark Attention** (EPFL) | 2023 | attention 内生 block retrieval | [landmark-attention.md](../references/landmark-attention.md) | ✅ |
+
+**完成度：Loop B 7/7 = 100%**（6 大流派 + 1 个 attention 内生检索代表）
+
+### 7.2 已应用（4 个项目内部文档整合）
+
+| # | 目标文件 | 整合内容 | Commit |
+|---|---------|---------|--------|
+| 1 | [hippo/retrieval-extraction.md](./hippo/retrieval-extraction.md) | 加入 InfLLM 块级检索参考 + 端侧回退路径 | `5b1ece0` |
+| 2 | [logos/k-strategy.md](./logos/k-strategy.md) | 新增 §2.6 端侧 KV cache Loop B fallback | `24b6516` |
+| 3 | [hippo/README.md](./hippo/README.md) | 新增 §2.6 与 Loop B 6 列对照表 | `9153ee2` |
+| 4 | [sadko/open-issues.md](./sadko/open-issues.md) | 新增 B-09 Compressive 1D Conv 备选 | `03c0a26` |
+
+### 7.3 待办（按需追加）
+
+| 候选 | 优先级 | 备注 |
 |------|:---:|------|
-| **Memorizing Transformers** (ICLR 2024) | 🔴 高 | 完整实现 Loop B 的"压缩 + kNN 检索" |
-| **Compressive Transformers** | 🟠 中 | 双粒度压缩思想可借鉴到 Hippo |
-| **AutoCompressors** | 🟡 低 | LLM 自压缩思想新颖但可能不适合 Logos |
-| **StreamingLLM / InfLLM** | 🟠 中 | 滑动窗口 + 注意力汇聚思想 |
+| 关注 `[Munkhdalai 2022]` 等**Memorizing Transformers 系列后续** | 🟢 | 与本项目关联弱 |
+| 关注 Mamba / SSM 类的**状态空间记忆**方案 | 🟢 | 与 Transformer 范式正交 |
+| 关注"无限上下文"领域的 Sora / Gemini 1.5 等工业实践 | 🟢 | 闭源，无法独立验证 |
+
+> Loop B 调研已**完整覆盖** 6 大流派（kNN 检索 / 1D Conv 压缩 / 滑动窗口+anchor / 块级检索 / LLM 自压缩 / 特殊 tokens / attention 内生）。后续若有新论文，**仅当项目出现新需求时**再调研。
 
 ---
 
-**最后更新**：2026-07-31
+**最后更新**：2026-07-31（v1.1：§7 完整更新 Loop B 调研完成度 7/7 + 应用整合 4 项 + 待办 3 项）
 **作者**：来自 DiscoLoop 调研 + 用户概念澄清工作流
 **关键澄清**：用户理解的"一个 decode 输出 = 一个循环"在循环 Transformer 中是错误的；正确是 K 次循环迭代。详见 §0.3
