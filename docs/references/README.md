@@ -21,6 +21,10 @@
 | [stars.md](./stars.md) | **STARS 2026 笔记**（循环崩溃的 LayerNorm 根因 + Jacobian 谱半径修复）| 🟡 重要 | ✅ 新增 2026-07-29 |
 | [per-token-convergence.md](./per-token-convergence.md) | **Per-Token Fixed-Point 笔记**（90% token 6 步收敛，10% 需要 8 步——动态 K 证据）| 🟡 重要 | ✅ 新增 2026-07-29 |
 | [discoloop.md](./discoloop.md) | **DiscoLoop 笔记**（UC Berkeley + Princeton，2607.00341，2026-07）——表征错位根因 + 双通道修复（架构参考，非核心依赖）| 🟡 参考 | ✅ 新增 2026-07-31 |
+| [memorizing-transformers.md](./memorizing-transformers.md) | **Memorizing Transformers 笔记**（Google，2203.08913，ICLR 2022 Spotlight）——kNN 增强注意力 + 262K tokens 外部记忆（Loop B 检索流派代表）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [compressive-transformers.md](./compressive-transformers.md) | **Compressive Transformers 笔记**（DeepMind，1911.05507，ICLR 2020）——双粒度 memory + 1D Conv 压缩（Loop B 压缩流派先驱）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [streaming-llm.md](./streaming-llm.md) | **StreamingLLM 笔记**（MIT-HAN-Lab + Meta，2309.17453，ICLR 2024）——attention sink + 滑动窗口，4M tokens 稳定推理（Loop B 最轻量级）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [inf-llm.md](./inf-llm.md) | **InfLLM 笔记**（THU + MIT + Meta，2402.04617，NeurIPS 2024）——块级 memory + 训练无关 1M+ tokens 推理（Loop B 当前 SOTA）| 🟡 重要 | ✅ 新增 2026-07-31 |
 | [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
 | [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
 
@@ -146,7 +150,8 @@ references/
 | 循环崩溃的根因？怎么修？ | [stars.md](./stars.md) §3 / §4 |
 | 90% token 6 步就够，10% 需要 8 步？ | [per-token-convergence.md](./per-token-convergence.md) §3 |
 | HRM-Text 的 K=8 假设是否成立？ | [loopcoder-v2.md §6.1](./loopcoder-v2.md#61-主线hrm-text-需要的前置实验) + [rrm-survey.md §5](./rrm-survey.md#5-与-latentmind-决策相关) |
-| **循环 Transformer 多跳推理 OOD 失败的"表征几何"根因？** | **[discoloop.md](./discoloop.md) §3.1 / §6.1** |
+| 循环 Transformer 多跳推理 OOD 失败的"表征几何"根因？ | [discoloop.md](./discoloop.md) §3.1 / §6.1 |
+| **如何区分"循环内"vs"跨循环"vs"prefill↔decode 交替"三种循环维度？** | **[../research/loop-memory-survey.md §0](../research/loop-memory-survey.md)** |
 
 ### 3.8 我想查看论文原文 PDF/HTML → 去哪查
 
@@ -157,6 +162,16 @@ references/
 | 下载来源？ | §3 下载来源说明 |
 | HRM-Text PDF 为什么没有？ | §3.3 / §5 重试策略 |
 | 怎么读 PDF / HTML？ | §4 使用方式 |
+
+### 3.9 我想了解"循环+记忆系统"流派的完整谱系 → 去哪查
+
+| 问题 | 查哪份 |
+|---|---|
+| 三种"循环"维度（intra-decode / inter-decode / prefill-decode）的区别？| [../research/loop-memory-survey.md §0](../research/loop-memory-survey.md)（跨研究方向调研）|
+| Loop B 记忆压缩的完整文献谱系（Memorizing / Compressive / Streaming / InfLLM）？| [../research/loop-memory-survey.md §2.2](../research/loop-memory-survey.md) + 各论文笔记 |
+| 我想实现"实时压缩 KV → 连续记忆层 → 离散 Q 对齐" 概念，应该看哪几篇？| [../research/loop-memory-survey.md §1](../research/loop-memory-survey.md)（用户概念精解）+ [Memorizing Transformers](./memorizing-transformers.md) §3 + [InfLLM](./inf-llm.md) §3 |
+| Logos 主线是否需要引入记忆系统？何时引入？| [../research/logos/64m-validation-plan.md §3.5](../research/logos/64m-validation-plan.md)（64M 不引入；1B+ 视探针结果）|
+| Hippo FSQ 设计与这些论文的关系？| [memorizing-transformers.md §6](./memorizing-transformers.md)（同源 + 差异）+ [compressive-transformers.md §6](./compressive-transformers.md) + [inf-llm.md §6](./inf-llm.md) |
 
 ---
 
@@ -183,6 +198,10 @@ references/
 - ✅ **STARS 2026**（ICML 2026，arXiv 待补）→ 笔记：[stars.md](./stars.md)
 - ✅ **Per-Token Convergence**（2026-07，arXiv 待补）→ 笔记：[per-token-convergence.md](./per-token-convergence.md)
 - ✅ **DiscoLoop**（arXiv:2607.00341v2）→ 笔记：[discoloop.md](./discoloop.md)
+- ✅ **Memorizing Transformers**（arXiv:2203.08913v2，ICLR 2022 Spotlight）→ 笔记：[memorizing-transformers.md](./memorizing-transformers.md)
+- ✅ **Compressive Transformers**（arXiv:1911.05507v2，ICLR 2020）→ 笔记：[compressive-transformers.md](./compressive-transformers.md)
+- ✅ **StreamingLLM**（arXiv:2309.17453v2，ICLR 2024）→ 笔记：[streaming-llm.md](./streaming-llm.md)
+- ✅ **InfLLM**（arXiv:2402.04617v2，NeurIPS 2024）→ 笔记：[inf-llm.md](./inf-llm.md)
 
 ### 4.3 待补充（外部源）
 
