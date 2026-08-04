@@ -25,6 +25,9 @@
 | [compressive-transformers.md](./compressive-transformers.md) | **Compressive Transformers 笔记**（DeepMind，1911.05507，ICLR 2020）——双粒度 memory + 1D Conv 压缩（Loop B 压缩流派先驱）| 🟡 重要 | ✅ 新增 2026-07-31 |
 | [streaming-llm.md](./streaming-llm.md) | **StreamingLLM 笔记**（MIT-HAN-Lab + Meta，2309.17453，ICLR 2024）——attention sink + 滑动窗口，4M tokens 稳定推理（Loop B 最轻量级）| 🟡 重要 | ✅ 新增 2026-07-31 |
 | [inf-llm.md](./inf-llm.md) | **InfLLM 笔记**（THU + MIT + Meta，2402.04617，NeurIPS 2024）——块级 memory + 训练无关 1M+ tokens 推理（Loop B 当前 SOTA）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [auto-compressors.md](./auto-compressors.md) | **AutoCompressors 笔记**（Princeton NLP，2305.14788，EMNLP 2023）——LLM 自生成 summary vectors + summary accumulation（Loop B LLM 自压缩流派）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [rmt.md](./rmt.md) | **Recurrent Memory Transformer 笔记**（MIPT + AIRI，2207.06881，NeurIPS 2022）——特殊 [mem] tokens + BPTT 跨段（Loop B 特殊 memory tokens 流派，被 AutoCompressors 直接继承）| 🟡 重要 | ✅ 新增 2026-07-31 |
+| [landmark-attention.md](./landmark-attention.md) | **Landmark Attention 笔记**（EPFL，2305.16300，NeurIPS 2023）——landmark token 作为 block retrieval gate + LLaMA 7B 扩展到 32K tokens（Loop B attention 内生检索流派）| 🟡 重要 | ✅ 新增 2026-07-31 |
 | [papers/](./papers/) | 论文源文件（PDF/HTML） | 🔴 核心 | ✅ |
 | [papers/README.md](./papers/README.md) | 论文源文件清单 + 下载说明 | — | ✅ |
 
@@ -202,6 +205,9 @@ references/
 - ✅ **Compressive Transformers**（arXiv:1911.05507v2，ICLR 2020）→ 笔记：[compressive-transformers.md](./compressive-transformers.md)
 - ✅ **StreamingLLM**（arXiv:2309.17453v2，ICLR 2024）→ 笔记：[streaming-llm.md](./streaming-llm.md)
 - ✅ **InfLLM**（arXiv:2402.04617v2，NeurIPS 2024）→ 笔记：[inf-llm.md](./inf-llm.md)
+- ✅ **AutoCompressors**（arXiv:2305.14788v2，EMNLP 2023）→ 笔记：[auto-compressors.md](./auto-compressors.md)
+- ✅ **RMT**（arXiv:2207.06881v2，NeurIPS 2022）→ 笔记：[rmt.md](./rmt.md)
+- ✅ **Landmark Attention**（arXiv:2305.16300v2，NeurIPS 2023）→ 笔记：[landmark-attention.md](./landmark-attention.md)
 
 ### 4.3 待补充（外部源）
 
