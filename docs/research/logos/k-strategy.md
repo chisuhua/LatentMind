@@ -2,7 +2,7 @@
 
 > **一句话定位**：Logos 端侧部署的并行化策略——K 值是**超参数**（不是架构决策），端侧 K>4 串行无价值，需用 PLT / Radix Cache / 层次化等并行化策略突破 K 限制。
 > **性质**：Logos 主线的核心策略文档
-> **最后更新**：2026-07-29（v1.2：调整为"超参数"定位 + 不集成 GRAM）
+> **最后更新**：2026-07-31（v1.3：新增 §2.6 端侧 KV cache Loop B fallback，引用 streaming-llm / inf-llm）
 
 ---
 
@@ -160,6 +160,57 @@ def hierarchical_reasoning(x, K_main=2, K_sub=1):
 
 ---
 
+### 2.6 端侧 KV cache 备选方案（Loop B fallback）
+
+> 📌 **2026-07-31 新增**：基于 Loop B 文献调研（[loop-memory-survey.md §2.2](../loop-memory-survey.md)），补充端侧 KV cache 管理的**最低成本 fallback**。当上述三方案都无法满足端侧预算时使用。
+
+#### 2.6.1 StreamingLLM 滑动窗口（最轻量级 fallback）
+
+**核心思想**（参考 [streaming-llm.md §3](../references/streaming-llm.md)）：保留 4 个初始 token 作为 attention sink + 最近 N tokens 的滑动窗口。
+
+```python
+# 端侧 Logos 的最低成本 KV 管理
+def streamingllm_kv_cache(x, sink_size=4, window_size=2048):
+    # x = 当前输入
+    kv_sinks = cache[:sink_size]          # 4 个初始 token（永久保留）
+    kv_window = cache[-window_size:]     # 最近 2048 tokens
+    kv_combined = concat([kv_sinks, kv_window])
+    return kv_combined
+```
+
+**关键优势**：
+- **完全训练无关**（无需修改 Logos）
+- **O(1) 显存**（不随序列长度增长）
+- **22.2× 加速** vs sliding window with re-computation（论文实测）
+- 已在 Llama-2-7B/13B/70B, MPT-7B/30B, Falcon-7B/40B, Pythia-2.8B/6.9B/12B 验证
+
+**关键限制**：
+- ❌ **不解决"真无限上下文"**——evicted token 不可恢复
+- ❌ 不解决"远距离实体召回"（与 Memorizing Transformers 正交）
+- ✅ 仅解决"流式部署"工程问题
+
+**Logos 适用场景**：
+- 1B 端侧部署（v3.0 之后）
+- 当 Hippo FSQ 端侧成本过高时的 fallback
+- 实时多轮对话（Loop C 维度）
+
+#### 2.6.2 端侧三档方案对比
+
+| 方案 | 显存 | 加速比 | 远距离能力 | 训练成本 | 端侧复杂度 | 推荐阶段 |
+|------|:---:|:---:|:---:|:---:|:---:|------|
+| **StreamingLLM 滑动窗口** | O(1) | 22.2× | ❌ | 0 | 🟢 极低 | 1B+ 推理 fallback |
+| **InfLLM 块级 memory** | O(M) | 中等 | ✅ | 0 | 🟡 中 | 1B+ 推理 |
+| **Hippo FM + FSQ** | O(M) | 取决于 FM | ✅✅ | 高 | 🔴 高 | 训练（端到端可微）|
+| **PLT/HLT-PLT**（§2.2）| O(K × L) | 62% | — | 中 | 🟡 中 | Logos 1B 训练+推理 |
+| **Radix Cache**（§2.3）| O(N) | N 倍 | — | 中 | 🟡 中 | Logos 1B 多路径 |
+
+**决策原则**：
+- **训练时**：Hippo FM + FSQ（端到端可微）
+- **推理时（端侧预算紧张）**：StreamingLLM → InfLLM → Hippo（按硬件能力选）
+- **推理时（云端）**：Hippo + Radix Cache
+
+---
+
 ## 3. Per-Token 早退（动态 K）
 
 **借鉴自**：[per-token-convergence.md §3](../references/per-token-convergence.md#3-核心发现)（90% token 6 步收敛）
@@ -251,6 +302,9 @@ def per_token_early_exit(x, max_K=8, epsilon=1e-4):
 | [docs/references/loopcoder-v2.md](../references/loopcoder-v2.md) | PLT 架构 |
 | [docs/references/per-token-convergence.md](../references/per-token-convergence.md) | 早退证据 |
 | [docs/references/stars.md](../references/stars.md) | 崩溃修复 |
+| [docs/references/streaming-llm.md](../references/streaming-llm.md) | 端侧 KV fallback（§2.6）|
+| [docs/references/inf-llm.md](../references/inf-llm.md) | 块级 memory 备选（§2.6）|
+| [../research/loop-memory-survey.md](../research/loop-memory-survey.md) | 循环+记忆系统完整谱系 |
 
 ---
 
