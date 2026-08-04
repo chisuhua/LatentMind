@@ -98,6 +98,26 @@
 | rms_norm_eps | 1e-5（yaml）vs 1e-6（dataclass） | 对齐 MiniMind3 原值 |
 | 阶段 2b epochs | 2（plan/文本）vs 3（v2 yaml） | 统一 |
 
+### B-09 🟠 Compressive 1D Conv 作为 FM 压缩的端侧备选（2026-07-31 新增）
+
+- **位置**：[validation-plan §2.4](./64m-validation-plan.md)（FM 压缩配置）+ [v3-arch §3](./v3-architecture.md)（Hippo 主压缩方案）
+- **来源**：[Compressive Transformers 论文笔记 §3.2](../../references/compressive-transformers.md)——1D Conv 压缩函数 f_c（stride=c, kernel=k≥c）
+- **问题**：
+  - 当前 Hippo 唯一压缩方案是 **Flow Matching（FM）**——端到端可微但计算成本较高
+  - 64M 强约束下，若 FM 端侧延迟超预算，**无 Plan B**——风险集中
+- **观察**：
+  - Compressive Transformers 在 Enwik8/WikiText-103 上用 1D Conv（c=3 或 4）达到 SOTA
+  - 1D Conv 是简单的"局部线性组合"压缩，端侧成本远低于 FM
+  - 缺点：1D Conv 是**局部压缩**，远距离语义可能丢失
+- **建议**：
+  - 64M 阶段**先**验证 FM 压缩（[validation-plan 实验 A](./64m-validation-plan.md)）
+  - 若 FM 端侧成本超预算（5ms 内难达），**回退评估** 1D Conv 作为 Plan B
+  - 实验对比：(A) FM 压缩 (B) 1D Conv 压缩 (C) 无压缩（dense memory）—— 端侧延迟 + 重建损失 + 检索 Recall 三项指标
+- **联动**：
+  - 与 B-05 [8,8,4] SOP 一并裁决：FSQ 配置 + 压缩函数选型
+  - 与 [hippo/retrieval-extraction.md §1](../../hippo/retrieval-extraction.md) 的"端侧备份方案"对应
+- **关联论文**：[Memorizing Transformers](../../references/memorizing-transformers.md)（kNN 检索路径，FM 失败时的另一个 fallback）
+
 ---
 
 ## 三、 C 类：跨文档表述不一致（需统一）
