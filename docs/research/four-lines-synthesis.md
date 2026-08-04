@@ -434,11 +434,19 @@ docs/research/
 
 **Riskiest Bet 实验**：随机注入 vs 真注入对比（单次实验信息密度最高）
 
+**新增验证章节（2026-07-31 同步）**：
+- **§3.5 表征对齐探针（DiscoLoop）**：H/L 循环 OOD 多跳是否面临表征错位（cosine < 0.5 ID / < 0.4 OOD）→ 决定是否引入 Φ 通道
+- **§3.6 Loop B 备选实验（条件启动）**：StreamingLLM / InfLLM / FM+FSQ 三档端侧 fallback
+- **§4.6 L-PLT 评估（条件启动）**：L 循环完整 PLT position shift，端侧延迟 -33%
+- **§4.6.9 L-PLT + Φ 联合实验**：延迟 + 质量联合优化（Q.Φ 共享 §3.5 Φ 模块）
+
 **参考文档**：
 - [logos/whitepaper.md §2.2](./logos/whitepaper.md#22-模块-blogos-分层递归潜空间引擎-750m)
-- [logos/64m-validation-plan.md](./logos/64m-validation-plan.md)
-- [logos/k-strategy.md](./logos/k-strategy.md)
+- [logos/64m-validation-plan.md](./logos/64m-validation-plan.md)（v1.5：§3.5 + §3.6 + §4.6 + §4.6.9）
+- [logos/k-strategy.md](./logos/k-strategy.md)（v1.5：§2.2.7 PLT + Φ 集成设计）
 - [logos/sadko-64m-coordination.md](./logos/sadko-64m-coordination.md)
+- [logos/codebook-config-sop.md](./logos/codebook-config-sop.md)（FSQ [8,8,4] 配置 SOP，L.3 备选前置）
+- [logos/fsq-consumption-design.md](./logos/fsq-consumption-design.md)（Logos 消费 Hippo FSQ 条件设计）
 
 ### 6.3 SADKO 64M 研究
 
@@ -527,17 +535,21 @@ docs/research/
 | 协调文档 / 契约 | 范围 | 状态 |
 |----------------|------|------|
 | [logos/sadko-64m-coordination.md](./logos/sadko-64m-coordination.md) | Logos ↔ SADKO 双轨协调（Phase 0/1/2/3）| ✅ 已建立 |
-| Hippo 胼胝体契约（[hippo/README.md §2](./hippo/README.md#2-胼胝体接口契约corpus-callosum-contract)）| Hippo ↔ SADKO 模型-模型信息流 | ✅ 已建立 |
+| Hippo 胼胝体契约（[hippo/README.md §2](./hippo/README.md#2-胼胝体接口契约corpus-callosum-contract)）| Hippo ↔ SADKO 模型-模型信息流 | ✅ 已建立（含 I6 Memory Token Interface）|
 | Thumos 赫尔墨斯契约（[thumos/README.md §2](./thumos/README.md#2-赫尔墨斯接口契约hermes-contract)）| Thumos ↔ HydraForge 模型-外部信息流 | ✅ 本文档新增（2026-07-31）|
+| [logos/codebook-config-sop.md](./logos/codebook-config-sop.md) | Logos ↔ Hippo FSQ 配置协调（[8,8,4] vs 256）| ✅ 2026-07-31 新增 |
+| [logos/fsq-consumption-design.md](./logos/fsq-consumption-design.md) | Logos ↔ Hippo FSQ 消费条件设计（4 前置门控 + INV-6~9）| ✅ 2026-07-31 新增 |
+| [../research/loop-memory-survey.md](./loop-memory-survey.md) | 循环+记忆系统文献谱系（Loop A/B/C 分类）| ✅ 2026-07-31 新增 |
 
 ### 7.2 待新增的协调条目
 
 | 协调 | 待协调内容 | 负责线路 | 时点 |
 |------|----------|---------|------|
 | Thumos 加入 Phase 0 | P.0.2 / P.0.6 是否扩展 / 新增 P.0.7 | Logos / Thumos / 协调中枢 | T+1（Thumos 验证前）|
-| 胼胝体契约扩展 | 现有 I1-I5 是否增加 I6（编排触发接口）| Hippo / Thumos | T+1 |
+| 胼胝体契约扩展 | I6 Memory Token Interface 数值化（维度/形状/范围）| Hippo / Thumos | T+1（INV-6 待 SADKO owner 签字）|
 | 四线 Phase 2 交叉验证 | 现有 Phase 2 仅 Logos vs SADKO，需扩展为四线对比 | Logos / SADKO / Hippo / Thumos | +5 月 |
 | 四线决策矩阵 | 现有双轨决策矩阵需扩展为四线 | 协调中枢 | +6 月 |
+| Loop B fallback 应用 | §3.6 三档备选（StreamingLLM / InfLLM / FM+FSQ）的端侧评估协调 | Logos / Hippo | §3.5 探针后 |
 
 ### 7.3 契约体系全景图
 
