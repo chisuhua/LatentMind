@@ -2,7 +2,7 @@
 
 > **一句话定位**：Logos 主线的 64M 起点——从 MiniMind3 64M Dense 基座改造为 Logos H/L 全新架构，**完全从零训练**，验证三大核心机制（双时间尺度、Per-Token 早退、多轨迹并行）。
 > **性质**：Logos 主线 **v1.0 起点**的关键验证计划
-> **最后更新**：2026-07-31（v1.4：新增 §3.6 Loop B 备选实验，回应 Loop B 文献调研）
+> **最后更新**：2026-07-31（v1.4：新增 §3.6 Loop B 备选实验 + §4.6 L-PLT 评估）
 > **上游文档**：[whitepaper.md](./whitepaper.md)（架构设计）
 > **下游文档**：[v1-architecture.md](./v1-architecture.md) / [v2-architecture.md](./v2-architecture.md) / [v3-architecture.md](./v3-architecture.md)
 
@@ -359,6 +359,122 @@ B.4 + B.5 结果：
 - **硬件**：单卡 RTX 3090 24GB
 - **训练数据**：与 v1.0 共享
 
+### 4.5 表征对齐探针（DiscoLoop 诊断，详见 §3.5）
+
+> 本节在 v2.0 阶段开始前，先用 §3.5 四组对比实验（A/B/C/D）测量 H/L 循环的表征错位程度。**仅在探针显示错位显著（cosine < 0.5 ID 或 < 0.4 OOD）时**，才考虑引入 Φ 通道。
+
+**与 B.2 PLT 的关系**：PLT 与 Φ 通道**互斥**（前者是 loop 内部并行化，后者是 loop 内部分布对齐）。决策路径：
+```
+§3.5 探针 → 错位显著？
+   ├─ NO → §4 B.2 PLT（端侧化优先）直接启用
+   └─ YES → §3.5 C/D 实验 → Φ 通道有效？
+       ├─ NO → §4 B.2 PLT + 后续 §4.6 评估
+       └─ YES → §3 v1.4+ 引入 Φ 通道（PLT 仍启用）
+```
+
+---
+
+### 4.6 L-PLT 实验（L 循环完整 PLT 改造，条件启动）🆕 v1.4
+
+> 📌 **2026-07-31 新增**：基于 [k-strategy §2.2](../k-strategy.md) 澄清的 PLT 机制，**当前 §4.2 B.2 实现的是 pipelining 风格**。本节评估**完整 PLT position shift** 应用于 L 循环的边际收益。
+
+#### 4.6.1 核心命题
+
+**完整 L-PLT（position shift 1）相比现有 HLT-PLT（pipelining）能否进一步降低端侧延迟？**
+
+**关键边界**：
+- ❌ **不默认启动**——架构复杂度增加
+- ✅ **触发条件**：(a) B.2 HLT-PLT 启用后 K=4 仍 > 150ms (b) K=6-8 端侧化失败 (c) 不破坏 L 状态累积
+- ❌ **不评估 H-PLT**（[k-strategy §2.2.4](../k-strategy.md) 已证明会破坏 L 状态，反退步 25%）
+
+#### 4.6.2 三种 L-PLT 实现对比
+
+| 实验 | 配置 | 端侧延迟（K=6）| 端侧延迟（K=8）| L 状态累积 |
+|------|------|:---:|:---:|:---:|
+| **P.0 Baseline（已有）** | B.2 HLT-PLT（pipelining）| 3 步 | 3 步 | ✅ 保持 |
+| **P.1 L-PLT 完整** | L 循环 position shift 1 | 2 步 | 2.5 步 | ⚠️ 切断 |
+| **P.2 L-PLT 弱化** | L 循环 position shift 0.5（隔位置）| 2.5 步 | 2.5 步 | ⚠️ 半切 |
+| **P.3 H+L-PLT 联合** | L-PLT + H-PLT 联合 | 2 步 | 2.5 步 | ❌ 双重切 |
+
+**P.1 L-PLT 核心实现**（[k-strategy §2.2.3](../k-strategy.md)）：
+
+```python
+def l_plt(x, H_cycles=2, L_cycles=3):
+    h_H = prefill(x)
+    h_L = h_L_init.expand_as(h_H)
+
+    for h in range(H_cycles):
+        for l in range(L_cycles):
+            # L 循环：完整 PLT（position shift 1）
+            h_L = L_module(shift_right(h_L) + h_H)
+        # H 循环：保持当前 H 状态
+        h_H = H_module(h_H + h_L)
+    return h_H
+```
+
+#### 4.6.3 实验时序与门禁
+
+```
+§4 v2.0 全部完成（含 B.1-B.5）
+   ↓
+触发条件判断：
+   ├─ B.2 HLT-PLT 启用 + K=4 ≤ 150ms → ✅ 不启动 L-PLT
+   ├─ B.2 HLT-PLT 启用 + K=4 > 150ms → 进入 P.1 L-PLT 评估
+   └─ K=6-8 端侧 > 300ms → 跳过 L-PLT，直接 §3.6 Loop B fallback
+   ↓
+P.1 L-PLT 评估（K=4 baseline 对照）：
+   ├─ 延迟节省 ≥ 25% 且 PPL 退化 < 5% → ✅ 启用 L-PLT
+   ├─ 延迟节省 ≥ 25% 但 PPL 退化 > 10% → ❌ 跳过 L-PLT
+   └─ 延迟节省 < 25% → ❌ 性价比不足，跳过 L-PLT
+```
+
+#### 4.6.4 测量指标
+
+| 指标 | 计算方式 | 通过标准 | 触发动作 |
+|------|---------|:---:|------|
+| **端侧延迟** | 单 token ms | K=4 ≤ 150ms | > 200ms → 标记"端侧化失败" |
+| **加速比** | vs P.0 HLT-PLT | ≥ 25% | < 10% → 标记"L-PLT 性价比不足" |
+| **PPL 退化** | vs P.0 HLT-PLT | < 5% | > 10% → 标记"质量不可接受" |
+| **L 状态连续性** | per-position h_L 跨 L cycle 变化 | 渐变（无突变）| 突变 → 标记"切断损害" |
+| **多 token 任务** | copy / reverse 等长序列 | 接近 baseline | 显著退化 → 标记"L 状态依赖任务失败" |
+
+#### 4.6.5 实施决策（开始前必须锁定）
+
+| 决策 | 选项 | 推荐 |
+|------|------|------|
+| L-PLT 位置 shift 量 | (a) 1（标准 PLT） (b) 0.5（隔位置）| **(a) 1**——标准实现，与论文一致 |
+| L 状态初始化 | (a) 全部 zero (b) 全部 embed (c) 混合 | **(a) zero**——L-PLT 后 init 不重要 |
+| H 循环是否同步改造 | (a) 仅 L-PLT (b) H-PLT 同时 (c) H-PLT 评估后再说 | **(a) 仅 L-PLT**——H-PLT 已被证明反退步 |
+| 与 B.3 Per-Token 早退的关系 | (a) 仅 L-PLT (b) L-PLT + 早退 | **(a) 仅 L-PLT**——避免双重并行化干扰 |
+
+#### 4.6.6 周期与资源
+
+- **周期**：1 周（仅触发时启动）
+- **硬件**：单卡 RTX 3090 24GB（与 v2.0 共享）
+- **数据集**：WikiText-103 mini + copy/reverse 长序列任务
+- **依赖**：必须等 B.1-B.5 实验完成 + 触发条件满足
+
+#### 4.6.7 与现有计划的关系
+
+| v2.0 实验 | 与 L-PLT 的关系 |
+|---------|----------------|
+| B.1 串行 K 循环 | L-PLT 改造后的串行 baseline |
+| **B.2 PLT/HLT-PLT** | **L-PLT 的直接对比对象**（P.0 baseline）|
+| B.3 Per-Token 早退 | 互斥评估（避免双重并行化）|
+| B.4 Radix Cache | 不相关（多假设决策）|
+| B.5 层次化推理 | 不相关（可分解任务）|
+| §3.6 Loop B 备选 | L-PLT 失败后的下一级 fallback |
+
+> **关键设计原则**：L-PLT 是**架构优化**（减少循环延迟），不是**架构替代**（解决端侧 K>8 限制）。若 L-PLT 失败，回退到 §3.6 Loop B fallback，不应继续叠加 L-PLT 变体。
+
+#### 4.6.8 决策传递：64M → 300M
+
+| L-PLT 评估结果 | 300M 处理 |
+|---------------|----------|
+| L-PLT 启用（节省 ≥ 25% 且 PPL 退化 < 5%）| 300M 默认开启 L-PLT |
+| L-PLT 失败（节省 < 25% 或 PPL 退化 > 10%）| 300M 退回 HLT-PLT；不引入 L-PLT |
+| L-PLT 边界（节省 15-25%）| 300M 进一步评估 K=4 + L-PLT vs K=2 HLT-PLT 端侧延迟 |
+
 ---
 
 ## 5. v3.0：多轨迹并行决策
@@ -415,7 +531,9 @@ C.2 vs C.3 结果：
 | B.3 Per-Token 早退平均 K | ≤ 3 | ≤ 2.5 |
 | B.4 Radix Cache N 路径延迟 | ≈ 1.5x K=2 | ≈ 1.2x K=2 |
 | B.5 层次化推理延迟 | ≈ 3x K=1 | ≈ 2.5x K=1 |
-| **核心结论** | **B.2 + B.3 + B.4 三件套** | **覆盖所有场景** |
+| **P.1 L-PLT（条件启动）** | **延迟节省 ≥ 25%** | **≥ 33%（与 [k-strategy §2.2.4 理论值一致](../k-strategy.md)）** |
+| P.1 L-PLT PPL 退化 vs P.0 HLT-PLT | < 10% | < 5% |
+| **核心结论** | **B.2 + B.3 + B.4 三件套** + **条件启用 P.1 L-PLT** | **覆盖所有场景** |
 
 ### 6.3 v3.0 验收
 
