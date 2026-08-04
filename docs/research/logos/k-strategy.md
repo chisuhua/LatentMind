@@ -2,7 +2,7 @@
 
 > **一句话定位**：Logos 端侧部署的并行化策略——K 值是**超参数**（不是架构决策），端侧 K>4 串行无价值，需用 PLT / Radix Cache / 层次化等并行化策略突破 K 限制。
 > **性质**：Logos 主线的核心策略文档
-> **最后更新**：2026-07-31（v1.3：新增 §2.6 端侧 KV cache Loop B fallback，引用 streaming-llm / inf-llm）
+> **最后更新**：2026-07-31（v1.5：新增 §2.2.7 PLT + Φ 集成设计，明确 DiscoLoop 对齐 vs PLT 跨位置对齐的差异）
 
 ---
 
@@ -224,6 +224,197 @@ def full_plt(x, H_cycles=2, L_cycles=3):
 | 多假设决策 | ❌ 用 Radix Cache（§2.3）|
 | 可分解推理 | ❌ 用层次化（§2.4）|
 | 端侧 K>4 仍超预算 | ❌ 用 Loop B fallback（§2.6）|
+
+#### 2.2.7 PLT + Φ 集成设计：跨位置对齐 vs 循环内对齐 🆕 v1.4
+
+> 📌 **2026-07-31 新增**：本节源自用户洞察——PLT 的后一轮输入 `shift(h^(r-1)_{i-1})` 与 DiscoLoop 的 H^(k) 面临**同一类问题**（h 偏离 E 分布），但**触发点不同**。本节详细对比两种"对齐"。
+
+##### 2.2.7.1 两种"对齐"的精确定义
+
+| 维度 | **DiscoLoop 对齐**（intra-loop / same-position）| **PLT 跨位置对齐**（inter-position / same-loop）|
+|------|----------------------------------------------|--------------------------------------------------------|
+| **错位的 h 来源** | 同位置前一轮的 H^(k) | 另一位置前一轮的 shift(h^(r-1)_{i-1}) |
+| **错位的本质** | 同一 token 多次循环后**纵向漂移** | 不同 token 同一轮内**横向错位** |
+| **信息流动方向** | 时间（K 轮迭代向下）| 空间（位置 i-1 → i 横向）|
+| **触发点** | 任意 token 经过 K 次循环后 | 任意轮次的位置 i（依赖 i-1）|
+| **f_θ 看到的输入** | H^(k) + E(x) | E(x_i) + shift(h^(r-1)_{i-1}) |
+| **不对齐的根源** | 同一 token 的 hidden state 偏离嵌入分布 | 跨 token 的 hidden state 偏离嵌入分布 |
+| **类比** | 同一**行**的"时间老化" | 同一**列**的"空间错位" |
+| **类比图示** | `t=0 → t=1 → t=2`（纵向）| `pos=0 → pos=1 → pos=2`（横向）|
+| **论文来源** | [discoloop.md §3.1](../../references/discoloop.md) | [loopcoder-v2.md §3.1](../../references/loopcoder-v2.md)（PLT 公式）|
+| **解法 Φ 的输入** | H^(k) （同位置）| shift(h^(r-1)_{i-1}) （跨位置）|
+| **Φ 输出** | 软嵌入（"h 的词表软期望"）| 软嵌入（同左）|
+| **解法核心** | "把纵向漂移的 h 拉回 E 分布" | "把横向错位的 shift(h) 拉回 E 分布" |
+
+**关键统一视角**：
+
+```
+两者本质相同：
+  f_θ 在"训练时消费 E"和"实际消费某 h"之间存在分布失配
+  Φ 通道的作用：把 h 投影回 E 分布 → 恢复 f_θ 的"舒适区"
+
+两者触发点不同：
+  DiscoLoop：纵向（时间）漂移
+  PLT：横向（空间）错位
+  → Φ 的应用位置不同（输入侧 / 位置侧 / 输出侧）
+```
+
+##### 2.2.7.2 三种 PLT + Φ 集成方式
+
+**方式 A：Φ 在 shift 前（输入对齐）**
+
+```python
+def plt_phi_input(h_prev, x, r):
+    """
+    方式 A: 跨位置状态在 shift 前 realign
+    适用: 强调"输入分布一致性"
+    """
+    h_shifted = shift_right(h_prev)              # [B, T, d]
+    h_aligned = phi(h_shifted)                    # ⭐ 关键：先 realign 再 add
+    B_r = x + h_aligned                            # f_θ 看到"两条都是 E 分布"
+    h_r = transformer_block(B_r)
+    return h_r
+```
+
+**关键代码**（φ 算子，复用 DiscoLoop）：
+
+```python
+def phi(h):
+    """
+    Soft decode-then-encode (DiscoLoop §4 Eq. 5)
+    输入: h, shape [B, T, d]
+    输出: 软嵌入, shape [B, T, d]
+    """
+    # 1. Soft decode: h → next-token 概率分布
+    logits = lm_head(h)                            # [B, T, V]
+    p = softmax(logits / tau, dim=-1)             # [B, T, V]
+    # 2. Soft encode: 概率分布 → 嵌入期望
+    h_phi = einsum("btv,vd->btd", p, embedding_table)  # [B, T, d]
+    h_phi = rms_norm(h_phi)
+    return h_phi
+```
+
+**方式 B：Φ 在 shift 后（位置对齐）**
+
+```python
+def plt_phi_position(h_prev, x, r):
+    """
+    方式 B: 跨位置状态 shift 后立即 realign
+    适用: 强调"f_θ 输出端对齐"
+    """
+    h_shifted = shift_right(h_prev)              # 原始 shift
+    B_r = x + h_shifted
+    h_r = transformer_block(B_r)                  # f_θ 输出
+    h_r = h_r + alpha * rms_norm(phi(h_r))        # ⭐ 输出端 DiscoLoop 范式
+    return h_r
+```
+
+**方式 C：Φ 在输入 + 输出双端（完整对齐）**
+
+```python
+def plt_phi_both(h_prev, x, r):
+    """
+    方式 C: 输入 + 输出双端对齐（最完整，但开销最大）
+    适用: 高质量需求（OOD 多跳推理 + 远距离能力）
+    """
+    h_shifted = shift_right(h_prev)
+    h_aligned = phi(h_shifted)                    # 输入端
+    B_r = x + h_aligned
+    h_r = transformer_block(B_r)
+    h_r = h_r + alpha * rms_norm(phi(h_r))        # 输出端
+    return h_r
+```
+
+##### 2.2.7.3 三种方式对比
+
+| 维度 | 方式 A 输入对齐 | 方式 B 输出对齐 | 方式 C 双端对齐 |
+|------|:---:|:---:|:---:|
+| **Φ 调用次数** | 1× per position | 1× per position | 2× per position |
+| **每 step 额外计算** | `O(T × V × d)` | `O(T × V × d)` | `O(2T × V × d)` |
+| **端侧延迟影响** | 中（额外 Φ 一次）| 中（额外 Φ 一次）| 高（额外 Φ 两次）|
+| **解的对齐问题** | shift 错位 | H 漂移 | 两者 |
+| **与 DiscoLoop 原文一致** | ❌ | ✅（与论文相同位置）| ❌ |
+| **与 PLT 原文一致** | ✅（先处理 shift）| ❌ | ❌ |
+| **推荐** | ✅ 性价比最高 | ⚠️ 单独用 | ❌ 开销大 |
+
+##### 2.2.7.4 与 DiscoLoop 的精确对照
+
+| 元素 | DiscoLoop 公式 | PLT + Φ 公式（方式 A）|
+|------|----------------|--------------------------|
+| **输入** | `Embed(x) + 残差` | `Embed(x_i) + shift(h^(r-1)_{i-1})` |
+| **错位源** | 残差中的 H^(k) | shift 后的 h^(r-1)_{i-1} |
+| **Φ 输入** | H^(k)（同位置）| shift(h^(r-1)_{i-1})（跨位置）|
+| **Φ 输出** | 软嵌入 | 软嵌入 |
+| **注入方式** | 残差相加 | 残差相加 |
+| **f_θ 看到的分布** | E(x) + E(Φ(H)) ≈ E | E(x_i) + E(Φ(shift(h))) ≈ E |
+| **目的** | 防止 H 漂移 | 防止 shift 错位 |
+| **对端到端可微** | ✅ | ✅（Φ 是 soft expectation）|
+| **对端侧 K>4 端侧化** | 无直接影响 | ⭐ 关键加速 |
+
+##### 2.2.7.5 对 Logos H/L 架构的具体应用
+
+```python
+# Logos L-PLT + Φ 集成（结合 §4.6 L-PLT + §3.5 DiscoLoop 探针）
+def l_plt_with_phi(h_L_prev, h_H, l):
+    """
+    h_L_prev: [B, T, d] 上一轮 L 循环的 L 状态
+    h_H: [B, T, d] 当前 H 状态（已含 §3.5 Φ 修正）
+    l: 当前 L 循环轮次
+    """
+    # 1. 跨位置 shift（位置间横向）
+    h_L_shifted = shift_right(h_L_prev)
+
+    # 2. 对齐到 E 分布（解决 PLT 错位）
+    h_L_aligned = phi(h_L_shifted)
+
+    # 3. 与 H 状态相加
+    h_L_input = h_H + h_L_aligned
+
+    # 4. f_θ 计算
+    h_L_new = L_module(h_L_input)
+    return h_L_new
+```
+
+**对 Logos 64M 验证计划的影响**：
+- §3.5（DiscoLoop 探针）若显示错位 → Φ 模块已就位
+- §4.6（L-PLT 评估）若启用 → Φ 已在 h_H 路径中，可**直接**用方式 A
+- 两节不再是独立实验，而是**共享 Φ 模块**的联合设计
+
+##### 2.2.7.6 决策原则
+
+| 端侧约束 + 质量要求 | 推荐方案 |
+|-------------------|---------|
+| K=2 端侧预算充足 | ❌ 不引入任何 PLT/Φ（保持串行 H/L）|
+| K=4 端侧预算紧张 | ✅ 仅 L-PLT（不含 Φ，节省 33% 延迟）|
+| K=4 + OOD 性能要求高 | ✅ L-PLT + Φ 方式 A（联合优化）|
+| K=6-8 端侧仍超预算 | ✅ L-PLT + Φ；若仍超 → §2.6 Loop B fallback |
+| K>8 | ❌ 不再叠加 PLT 变体；用 §2.6 StreamingLLM |
+
+##### 2.2.7.7 与现有 PLT 方案的关系
+
+| 现有方案 | 加入 Φ 后的演化 |
+|---------|----------------|
+| §2.2.2 HLT-PLT（pipelining）| + 方式 A = L-PLT + Φ（**最实用**）|
+| §2.2.3 H-PLT | 不推荐（破坏 L 状态累积）|
+| §2.2.3 L-PLT | + 方式 A = **核心推荐方案** |
+| §2.2.3 H+L-PLT 联合 | 不推荐（双重损害）|
+
+##### 2.2.7.8 关键发现总结
+
+1. **DiscoLoop 对齐 vs PLT 对齐的差异**：
+   - DiscoLoop：**纵向漂移**（同一 token 多轮后偏离 E）
+   - PLT：**横向错位**（不同 token 同一轮间 h 偏离 E）
+   - 两者本质相同（f_θ 消费分布失配），但触发维度正交
+
+2. **PLT + Φ 是"延迟 + 质量"联合优化**：
+   - 单独 PLT：延迟 -33%，但 shift 错位可能损害质量
+   - 单独 Φ：质量 +OOD，但无延迟改善
+   - 联合 PLT + Φ：延迟 -33% + 质量稳定（错位被 Φ 解决）
+
+3. **对项目文档的影响**：
+   - §3.5（Φ）与 §4.6（L-PLT）**应联合验证**而非独立
+   - 这是项目 PLT 文档的一个**真实价值新增点**（不是简单引用更新）
+   - 详见 [64m-validation-plan.md §4.6.9](../research/logos/64m-validation-plan.md) 联合实验设计
 
 ### 2.3 Radix Cache 多路径并行
 
