@@ -481,6 +481,9 @@ def l_plt_with_phi(h_L_prev, h_H, l):
 | [../research/sadko/whitepaper.md](../sadko/whitepaper.md) | SADKO 异构双脑（Loop B 模块化）|
 | [../research/hippo/README.md](../hippo/README.md) | Hippo 胼胝体契约（Loop B 接口）|
 | [../research/logos/64m-validation-plan.md §3.5](../logos/64m-validation-plan.md) | 表征对齐探针（Loop A 实验）|
+| [../research/logos/64m-validation-plan.md §3.6](../logos/64m-validation-plan.md) | Loop B 备选实验（条件启动，三档 fallback）|
+| [../research/logos/64m-validation-plan.md §4.6.9](../logos/64m-validation-plan.md) | L-PLT + Φ 联合实验（延迟 + 质量联合优化）|
+| [../research/logos/k-strategy.md §2.2.7](../logos/k-strategy.md) | PLT + Φ 集成设计（DiscoLoop 对齐 vs PLT 跨位置对齐）|
 | [../research/logos/fsq-consumption-design.md](../logos/fsq-consumption-design.md) | Logos 消费 Hippo FSQ 条件设计（Loop A + Loop B 融合）|
 | [../research/four-lines-synthesis.md](../four-lines-synthesis.md) | 四研究线综合脉络 |
 
@@ -504,7 +507,9 @@ def l_plt_with_phi(h_L_prev, h_H, l):
 
 **完成度：Loop B 7/7 = 100%**（6 大流派 + 1 个 attention 内生检索代表）
 
-### 7.2 已应用（4 个项目内部文档整合）
+### 7.2 已应用（11 个项目内部文档整合）
+
+> 📌 **2026-07-31 更新**：从 4 项扩展至 11 项，覆盖 Loop B 调研 + PLT/Φ 集成 + 全项目 README 同步。
 
 | # | 目标文件 | 整合内容 | Commit |
 |---|---------|---------|--------|
@@ -512,6 +517,13 @@ def l_plt_with_phi(h_L_prev, h_H, l):
 | 2 | [logos/k-strategy.md](./logos/k-strategy.md) | 新增 §2.6 端侧 KV cache Loop B fallback | `24b6516` |
 | 3 | [hippo/README.md](./hippo/README.md) | 新增 §2.6 与 Loop B 6 列对照表 | `9153ee2` |
 | 4 | [sadko/open-issues.md](./sadko/open-issues.md) | 新增 B-09 Compressive 1D Conv 备选 | `03c0a26` |
+| 5 | [references/README.md](../references/README.md) | 索引登记 7 篇 Loop B 论文 + §3.9 速查表 | `0d0ddd1` + `e527d46` |
+| 6 | [logos/64m-validation-plan.md](./logos/64m-validation-plan.md) | §3.6 Loop B 备选实验（条件启动）| `d63e26c` |
+| 7 | [logos/64m-validation-plan.md](./logos/64m-validation-plan.md) | §4.6 L-PLT 评估 + §4.6.9 L-PLT+Φ 联合实验 | `1cb53dd` + `77eaa8c` |
+| 8 | [logos/k-strategy.md](./logos/k-strategy.md) | §2.2 PLT 机制澄清 + §2.2.7 PLT+Φ 集成设计 | `90016a0` + `b026847` |
+| 9 | [logos/k-strategy.md](./logos/k-strategy.md) | §2.2.7 PLT + Φ（DiscoLoop 对齐 vs PLT 跨位置对齐）| `b026847` |
+| 10 | [README.md](../../README.md) + AGENTS.md + architecture.md | 四研究线格局 + Loop B 谱系全项目同步 | `a531a3d` ~ `5437dd9` |
+| 11 | [four-lines-synthesis.md](./four-lines-synthesis.md) + rfcs + papers | 四线综合脉络 + RFC/论文索引同步 | `ec31d8d` ~ `5c7e3a7` |
 
 ### 7.3 待办（按需追加）
 
