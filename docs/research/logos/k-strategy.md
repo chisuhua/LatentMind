@@ -71,26 +71,159 @@ K = 实际循环次数 / 共享块参数
 
 **借鉴自**：PLT（[loopcoder-v2.md §3](../references/loopcoder-v2.md#3-核心创新)）
 
-**移植到 HRM（H/L 风格）**：HLT-PLT
+#### 2.2.1 PLT 核心机制（澄清）
+
+> 📌 **2026-07-31 澄清**：项目此前 §2.2 简化描述了 PLT 为"pipelining"，**未完整说明 position shift 机制**。本节补充精确公式。
+
+**PLT 原始公式**（loopcoder-v2 §3.2 Eq. 2）：
 
 ```python
-# HLT-PLT（H 串行 + L 并行）
+# PLT 位置 shift 公式
+def plt_block(x, h_prev, r):
+    """
+    x: token embeddings, shape [B, T, d]
+    h_prev: 上一轮循环的 hidden states, shape [B, T, d]
+    r: 当前循环轮次
+    """
+    # 关键：position shift（右移 1 位）
+    h_shifted = shift_right(h_prev)  # h_shifted[i] = h_prev[i-1], h_shifted[0] = 0
+
+    # 残差：当前 token embedding + 上一轮（上一位置）的 hidden state
+    B_r = x + h_shifted
+    h_r = transformer_block(B_r)
+    return h_r
+```
+
+**并行性的精确解读**：
+- 同一个 loop r 内，**所有 positions 可并行**（每个 position 只需自己的 embedding + 前一 token 的上一轮输出）
+- 不同 loop r+1 与 loop r 之间是**串行**的（loop r+1 需要 loop r 的所有结果）
+- **真正的并行 = 位置间 pipeline**：loop r+1 在 position i+1 可早于 loop r 在 position i 启动
+- **绝对延迟 ≈ T（序列长度）的"宽度"**，而非 K（循环数）× T 的"深度"
+
+#### 2.2.2 移植到 H/L 架构：HLT-PLT（现有方案）
+
+```python
+# HLT-PLT（H 串行 + L pipeline 并行）— Logos 当前 §2.2 实现
 def hlt_plt(x, H_cycles=2, L_cycles=3):
     h_H = prefill(x)
     h_L = h_L_init.expand_as(h_H)
-    
+
     for h in range(H_cycles):
-        # L 循环并行（CLP 偏移打破串行依赖）
+        # L 循环 pipeline（CLP 偏移打破串行依赖）
         h_L = parallel_L_chain(h_L + h_H)
         # H block 串行
         h_H = H_block(h_H + h_L)
-    
+
     return h_H
 ```
 
-**延迟节省**：8 步变 3 步，**延迟降低 62%**。
+**延迟节省**：8 步（K=8）→ 3 步，**62% 节省**。但实现是"pipelining"而非"完整 PLT position shift"。
 
-**适用场景**：单轨迹推理 K=4-8 时。
+#### 2.2.3 完整 PLT 移植：H-PLT + L-PLT（新增评估）
+
+> 📌 **2026-07-31 新增**：完整 PLT 公式应用到 H/L 双层。
+
+**H-PLT**（H 循环 position shift）：
+
+```python
+def h_plt(x, H_cycles=2, L_cycles=3):
+    h_H = prefill(x)  # 初始 embedding
+    h_L = h_L_init.expand_as(h_H)
+
+    for h in range(H_cycles):
+        for l in range(L_cycles):
+            # L 循环：保持当前 L 状态（无 shift）
+            h_L = L_module(h_L + h_H)
+        # H 循环：完整 PLT（position shift）
+        h_H = H_module(shift_right(h_H) + h_L)
+    return h_H
+```
+
+**L-PLT**（L 循环 position shift）：
+
+```python
+def l_plt(x, H_cycles=2, L_cycles=3):
+    h_H = prefill(x)
+    h_L = h_L_init.expand_as(h_H)
+
+    for h in range(H_cycles):
+        for l in range(L_cycles):
+            # L 循环：完整 PLT（position shift 1）
+            h_L = L_module(shift_right(h_L) + h_H)
+        # H 循环：保持当前 H 状态
+        h_H = H_module(h_H + h_L)
+    return h_H
+```
+
+**完整 PLT（H-PLT + L-PLT）**：
+
+```python
+def full_plt(x, H_cycles=2, L_cycles=3):
+    h_H = prefill(x)
+    h_L = h_L_init.expand_as(h_H)
+
+    for h in range(H_cycles):
+        for l in range(L_cycles):
+            # L 循环 PLT
+            h_L = L_module(shift_right(h_L) + h_H)
+        # H 循环 PLT
+        h_H = H_module(shift_right(h_H) + h_L)
+    return h_H
+```
+
+#### 2.2.4 三种方案延迟对比
+
+| K 总迭代 | 串行 | HLT-PLT（pipelining）| H-PLT | L-PLT | H-PLT + L-PLT |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| **K=2 (1H×2L)** | 2 | 2 | 2 | 1.5 | 1.5 |
+| **K=4 (1H×4L)** | 4 | 2 | 2 | 2 | 2 |
+| **K=6 (2H×3L)** | 6 | 3 | 3 | 2 | 2 |
+| **K=8 (2H×4L)** | 8 | 3 | 4 | 2.5 | 2.5 |
+
+**边际收益分析**：
+
+| 改造 | 收益 | 边际 |
+|------|------|------|
+| 串行 → HLT-PLT | 8→3（**62%**）| 巨大（基础 pipelining）|
+| HLT-PLT → H-PLT | 3→4（**-25%**，退化）| ❌ 退步（移位打破 L 状态累积）|
+| HLT-PLT → L-PLT | 3→2（**33%**）| ✅ 收益显著 |
+| HLT-PLT → H+L-PLT | 3→2.5（**17%**）| ⚠️ 收益小但仍有 |
+| L-PLT → H+L-PLT | 2→2.5（**-25%**，退化）| ❌ 退步（同时移位双重损害）|
+
+**关键洞察**：
+- ✅ **L-PLT 单独**收益最大（33% 节省 + 不破坏 H 状态）
+- ❌ **H-PLT 单独**会破坏 L 状态累积，**反退步**
+- ⚠️ **H+L-PLT 联合**比 L-PLT 单独更差
+- **结论**：**若启用 PLT，仅做 L-PLT 即可**（不要做 H-PLT）
+
+#### 2.2.5 决策原则
+
+| 端侧约束 | 推荐方案 | 理由 |
+|---------|---------|------|
+| **K ≤ 2 即可达成端侧预算** | ❌ 不引入 PLT | 边际收益小，架构复杂度不划算 |
+| **K = 4 需端侧化** | ✅ L-PLT | 33% 节省且仅破坏 1 处 |
+| **K = 6-8 需端侧化** | ✅ L-PLT + 评估 Per-Token 早退 | 早退可能比进一步 PLT 更有效 |
+| **K > 8** | ❌ L-PLT 也不够 | 需考虑 §2.6 Loop B fallback |
+
+**关键洞察（用户提问的答案）**：
+- 用户问的"PLT 应用于 L 循环"——**确实有价值**（L-PLT 收益 33%）
+- 但 **H-PLT 不推荐**（会破坏 L 状态累积，反退步）
+- **架构复杂度成本 > 25% 延迟节省** → 跳过 L-PLT 也是一个合理选择
+
+**L-PLT 的核心风险**：
+- ⚠️ 跨位置 L 状态被"切断"——L 状态累积失去 per-position 连续性
+- ⚠️ 文档级 context 依赖减弱（L 状态不再"记得"自己的历史）
+- ⚠️ 需重新验证"非主流"任务（数学推理、决策）上的 PPL 退化
+- ❌ 端到端训练不可微（position shift 在反向传播时需特殊处理）
+
+#### 2.2.6 适用场景
+
+| 场景 | 推荐 |
+|------|------|
+| 单轨迹推理 K=4-8 | ✅ L-PLT |
+| 多假设决策 | ❌ 用 Radix Cache（§2.3）|
+| 可分解推理 | ❌ 用层次化（§2.4）|
+| 端侧 K>4 仍超预算 | ❌ 用 Loop B fallback（§2.6）|
 
 ### 2.3 Radix Cache 多路径并行
 
