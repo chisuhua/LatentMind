@@ -2,7 +2,7 @@
 
 > **一句话定位**：Logos 主线的 64M 起点——从 MiniMind3 64M Dense 基座改造为 Logos H/L 全新架构，**完全从零训练**，验证三大核心机制（双时间尺度、Per-Token 早退、多轨迹并行）。
 > **性质**：Logos 主线 **v1.0 起点**的关键验证计划
-> **最后更新**：2026-07-31（v1.3：新增 §3.5 表征对齐探针，回应 DiscoLoop 调研）
+> **最后更新**：2026-07-31（v1.4：新增 §3.6 Loop B 备选实验，回应 Loop B 文献调研）
 > **上游文档**：[whitepaper.md](./whitepaper.md)（架构设计）
 > **下游文档**：[v1-architecture.md](./v1-architecture.md) / [v2-architecture.md](./v2-architecture.md) / [v3-architecture.md](./v3-architecture.md)
 
@@ -238,6 +238,86 @@ v1.0 A.1-A.4 baseline 通过（§3）
 | Φ 注入位置 | (a) 每 H/L 边界 (b) 仅 H 循环边界 (c) 仅 L 循环边界 | **(b) 仅 H 边界**——Oracle 推荐，避免每 L 注入的计算开销 |
 | 温度 τ | (a) 固定 1.0 (b) 可学习 | **(a) 固定 1.0**——Oracle 警示 τ 敏感性，先固定排除干扰 |
 | 激活精度 | (a) 全 FP16 (b) 投影/softmax/Φ FP16，其他 INT8 | **(a) 全 FP16**——INT8 误差会逐跳累积，先排除量化干扰 |
+
+### 3.6 Loop B 备选实验（条件启动）🆕 v1.4
+
+> 📌 **2026-07-31 新增**：基于 Loop B 文献调研（[loop-memory-survey.md §2.2](../../loop-memory-survey.md)），本节提供 Logos 64M 阶段**在 §3.5 表征探针显示问题 / 端侧预算超限 / 远距离能力不足**时的备选方案。
+
+#### 3.6.1 核心命题
+
+**当主路径（§3.5 表征对齐 + §4 K 循环 + §5 多轨迹）任一关键实验失败时，Loop B 备选方案能否作为可接受的 Plan B？**
+
+**关键边界**：
+- ❌ **不默认启动**——主路径优先
+- ✅ **触发条件**：(a) §3.5 探针显示错位且 Φ 通道无效 (b) 端侧 K>4 端侧化失败 (c) 远距离能力不足
+- ✅ **只验证端侧可行性 + 信息保留率**，不验证性能上限
+
+#### 3.6.2 三组备选实验
+
+| 实验 | 配置 | 触发条件 | 端侧开销 | 参考 |
+|------|------|---------|:---:|------|
+| **L.1 StreamingLLM 滑动窗口** | 4 sink + 2048 滑动窗口 | 端侧 K>4 失败 | 🟢 极低 | [streaming-llm.md](../../references/streaming-llm.md) §3.2 |
+| **L.2 InfLLM 块级 memory** | 块大小 128 + top-16 检索 | 远距离能力不足 | 🟡 中 | [inf-llm.md](../../references/inf-llm.md) §3.1 |
+| **L.3 FM + FSQ 端侧压缩** | FM 压缩率 4× + FSQ 256 | 主路径 FSQ 利用率 < 80% | 🟡 中 | [compressive-transformers.md](../../references/compressive-transformers.md) §3.2（1D Conv 备选）+ [codebook-config-sop.md](./codebook-config-sop.md) |
+
+#### 3.6.3 实验时序与门禁
+
+```
+§3.5 探针 + §4 v2.0 + §5 v3.0 全部完成
+   ↓
+主路径评估：是否需要 Loop B fallback？
+   ├─ 主路径通过 + 端侧 K>4 OK + 远距离 OK → ✅ 不启动本节
+   └─ 任一失败 → 进入 L.1/L.2/L.3 选择性验证
+       ↓
+   L.1（端侧硬约束触发）→ 验证 KV cache O(1) 显存 + 22.2× 加速
+       ├─ PPL 退化 < 10% → ✅ 可作为推理 fallback
+       └─ PPL 退化 > 20% → ❌ 不可接受
+   L.2（远距离能力触发）→ 验证块级检索 + 训练无关 1M+ tokens
+       ├─ 远距离任务 Recall > 0.7 → ✅ 优于纯滑动窗口
+       └─ 检索延迟 > 10ms → ❌ 端侧不可行
+   L.3（FSQ 利用率触发）→ 验证 FM 压缩 vs 1D Conv 备选
+       ├─ FM 端侧 < 5ms → ✅ 维持 FM
+       └─ FM 端侧 > 5ms → 回退 1D Conv（Compressive 风格）
+```
+
+#### 3.6.4 测量指标
+
+| 指标 | 计算方式 | 通过标准 | 触发动作 |
+|------|---------|:---:|------|
+| **KV 显存** | 端侧部署时 KV cache 大小 | O(1) for L.1 / O(M) for L.2 | > 端侧预算 → 标记"端侧不可行" |
+| **加速比** | vs baseline 串行 K=2 | L.1 ≥ 10× / L.2 ≥ 2× | < 1× → 标记"无收益" |
+| **远距离任务 Recall** | ∞Bench / LongBench 子集 | ≥ 0.7 | < 0.5 → 标记"远距离失败" |
+| **PPL 退化** | vs 主路径 PPL | < 10% | > 20% → 标记"质量不可接受" |
+| **训练无关性** | 训练步骤 = 0 | L.1 / L.2 满足 | L.3 需训练 |
+| **延迟** | 单 token 端侧 ms | ≤ 200ms（K=2）| > 300ms → 标记"端侧不可行" |
+
+#### 3.6.5 实施决策（开始前必须锁定）
+
+| 决策 | 选项 | 推荐 |
+|------|------|------|
+| L.1 滑动窗口大小 | (a) 1024 (b) 2048 (c) 4096 | **(b) 2048**——典型值，与多数预训练窗口匹配 |
+| L.1 sink token 数 | (a) 1 (b) 4 (c) 8 | **(b) 4**——论文推荐 |
+| L.2 块大小 | (a) 64 (b) 128 (c) 256 | **(b) 128**——论文推荐，与 FSQ 256 兼容 |
+| L.2 检索 top-k | (a) 8 (b) 16 (c) 32 | **(b) 16**——与 Hippo I3 K=8 接近 |
+| L.3 压缩率 | (a) 2× (b) 4× (c) 8× | **(b) 4×**——与 FSQ 256 码本容量匹配 |
+
+#### 3.6.6 周期与资源
+
+- **周期**：1-2 周（仅触发时启动）
+- **硬件**：单卡 RTX 3090 24GB（与 v1.0-v3.0 共享）
+- **数据集**：与 §3.5 共享（entity-disjoint 多跳 + 端侧延迟基准）
+- **依赖**：必须等主路径（§3.5 + §4 + §5）实验完成后才启动
+
+#### 3.6.7 与现有计划的关系
+
+| 主路径章节 | 与 Loop B 备选的关系 |
+|----------|---------------------|
+| §3.5 表征对齐探针 | 错位显著 + Φ 失败 → 启动 L.3（FM 端侧重做）|
+| §4 v2.0 K 循环策略 | K>4 端侧化失败 → 启动 L.1（滑动窗口 fallback）|
+| §5 v3.0 多轨迹 | 远距离不足 → 启动 L.2（块级 memory）|
+| §12 决策传递：64M → 300M | 主路径失败 → 300M 选用 Loop B fallback |
+
+> **关键设计原则**：Loop B 备选是**工程 fallback**（端侧可行性），不是**架构替代**（性能上限）。即使启用 Loop B，Logos 主线架构（H/L 循环 + Nano-WM Gate）保持不变。
 
 ---
 
@@ -487,6 +567,10 @@ Week 10+:   交付《Logos 64M 验证报告》
 | [sadko-64m-validation-plan.md](../sadko/64m-validation-plan.md) | SADKO 64M 验证计划（并行路线）|
 | [docs/research/sadko/v1-architecture.md](../sadko/v1-architecture.md) | SADKO Split-GQA 详细实现（v1.0 A.2 借鉴）|
 | [discoloop.md](../../references/discoloop.md) | **DiscoLoop 论文笔记**（§3.5 探针设计的灵感来源与边界）|
+| [streaming-llm.md](../../references/streaming-llm.md) | **StreamingLLM 笔记**（§3.6 L.1 备选实验参考）|
+| [inf-llm.md](../../references/inf-llm.md) | **InfLLM 笔记**（§3.6 L.2 备选实验参考）|
+| [compressive-transformers.md](../../references/compressive-transformers.md) | **Compressive Transformers 笔记**（§3.6 L.3 1D Conv 备选）|
+| [codebook-config-sop.md](./codebook-config-sop.md) | **FSQ [8,8,4] SOP**（§3.6 L.3 与 Hippo 配置联合）|
 | [AGENTS.md §7](../../AGENTS.md#7-研究路线分工双轨制--2026-07-29-战略决策) | 双轨分工战略 |
 
 ---
