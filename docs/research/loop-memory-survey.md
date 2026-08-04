@@ -157,7 +157,128 @@
 | **项目 Hippo / SADKO 的对齐** | 让 AR（连续 logits）与 Hippo（离散 FSQ）通过扩散蒸馏对齐（解决跨模块分布错位）| Loop B（cross-module）|
 | **Logos Nano-WM Gate 的对齐** | 让外部知识 KV 与 Logos hidden state 在门控信号上对齐（解决知识注入）| Loop B（cross-component）|
 
-**三种"对齐"虽然都用同一个词，但解决完全不同维度的问题**。
+**四种"对齐"虽然都用同一个词，但解决完全不同维度的问题**。
+
+---
+
+### 1.5 DiscoLoop × PLT 对齐统一视角（2026-07-31 新增，跨流派发现）
+
+> 📌 **本节为项目关键发现**：本节源自用户洞察——PLT 的后一轮输入 `shift(h^(r-1)_{i-1})` 与 DiscoLoop 的 H^(k) 面临**同一类问题**（h 偏离 E 分布），但**触发维度不同**。本节为这种"对齐"建立统一框架。
+
+#### 1.5.1 两种"对齐"的精确定义
+
+| 维度 | **DiscoLoop 对齐**（intra-loop / same-position）| **PLT 跨位置对齐**（inter-position / same-loop）|
+|------|----------------------------------------------|--------------------------------------------------------|
+| **错位的 h 来源** | 同位置前一轮的 H^(k) | 另一位置前一轮的 shift(h^(r-1)_{i-1}) |
+| **错位的本质** | 同一 token 多次循环后**纵向漂移** | 不同 token 同一轮内**横向错位** |
+| **信息流动方向** | 时间（K 轮迭代向下）| 空间（位置 i-1 → i 横向）|
+| **触发点** | 任意 token 经过 K 次循环后 | 任意轮次的位置 i（依赖 i-1）|
+| **f_θ 看到的输入** | H^(k) + E(x) | E(x_i) + shift(h^(r-1)_{i-1}) |
+| **不对齐的根源** | 同一 token 的 hidden state 偏离嵌入分布 | 跨 token 的 hidden state 偏离嵌入分布 |
+| **类比** | 同一**行**的"时间老化" | 同一**列**的"空间错位" |
+| **类比图示** | `t=0 → t=1 → t=2`（纵向）| `pos=0 → pos=1 → pos=2`（横向）|
+| **论文来源** | [discoloop.md §3.1](../references/discoloop.md) | [loopcoder-v2.md §3.1](../references/loopcoder-v2.md)（PLT 公式）|
+| **解法 Φ 的输入** | H^(k) （同位置）| shift(h^(r-1)_{i-1}) （跨位置）|
+| **Φ 输出** | 软嵌入（"h 的词表软期望"）| 软嵌入（同左）|
+| **解法核心** | "把纵向漂移的 h 拉回 E 分布" | "把横向错位的 shift(h) 拉回 E 分布" |
+
+#### 1.5.2 关键统一视角
+
+**两者本质相同**：
+- 共同点：f_θ 在"训练时消费 E"和"实际消费某 h"之间存在分布失配
+- 共同解法：Φ 通道把 h 投影回 E 分布 → 恢复 f_θ 的"舒适区"
+
+**两者触发点不同**：
+- DiscoLoop：纵向（时间）漂移
+- PLT：横向（空间）错位
+- → Φ 的应用位置不同（输入侧 / 位置侧 / 输出侧）
+
+**统一公式**（DiscoLoop + PLT + Φ 集成）：
+
+```python
+# 通用"分布对齐"算子（可应用于任何 h 错位场景）
+def phi(h):
+    """Soft decode-then-encode: 把任意 h 投影回 E 分布"""
+    p = softmax(lm_head(h) / tau, dim=-1)   # h → 词表概率
+    return einsum("btv,vd->btd", p, embedding_table)  # 词表概率 → 嵌入期望
+```
+
+#### 1.5.3 PLT + Φ 集成方式（三种）
+
+**方式 A：Φ 在 shift 前（输入对齐）**
+
+```python
+def plt_phi_input(h_prev, x, r):
+    h_shifted = shift_right(h_prev)              # [B, T, d]
+    h_aligned = phi(h_shifted)                    # ⭐ 关键：先 realign 再 add
+    B_r = x + h_aligned                            # f_θ 看到"两条都是 E 分布"
+    h_r = transformer_block(B_r)
+    return h_r
+```
+
+**方式 B：Φ 在 shift 后（位置对齐）**
+
+```python
+def plt_phi_position(h_prev, x, r):
+    h_shifted = shift_right(h_prev)
+    B_r = x + h_shifted
+    h_r = transformer_block(B_r)
+    h_r = h_r + alpha * rms_norm(phi(h_r))        # ⭐ 输出端 DiscoLoop 范式
+    return h_r
+```
+
+**方式 C：双端对齐（输入 + 输出）**
+
+```python
+def plt_phi_both(h_prev, x, r):
+    h_shifted = shift_right(h_prev)
+    h_aligned = phi(h_shifted)                    # 输入端
+    B_r = x + h_aligned
+    h_r = transformer_block(B_r)
+    h_r = h_r + alpha * rms_norm(phi(h_r))        # 输出端
+    return h_r
+```
+
+#### 1.5.4 对 Logos H/L 架构的具体应用
+
+```python
+# Logos L-PLT + Φ 集成（结合 §4.6 L-PLT + §3.5 DiscoLoop 探针）
+def l_plt_with_phi(h_L_prev, h_H, l):
+    h_L_shifted = shift_right(h_L_prev)        # 跨位置 L 状态
+    h_L_aligned = phi(h_L_shifted)             # ⭐ 对齐到 E 分布
+    h_L_input = h_H + h_L_aligned
+    h_L_new = L_module(h_L_input)
+    return h_L_new
+```
+
+**对 Logos 64M 验证计划的影响**：
+- §3.5（DiscoLoop 探针）若显示错位 → Φ 模块已就位
+- §4.6（L-PLT 评估）若启用 → Φ 已在 h_H 路径中，可**直接**用方式 A
+- 两节不再是独立实验，而是**共享 Φ 模块**的联合设计
+
+#### 1.5.5 对项目决策的关键启示
+
+1. **§3.5（Φ）与 §4.6（L-PLT）应联合验证**而非独立
+2. **PLT + Φ 是"延迟 + 质量"联合优化**：
+   - 单独 PLT：延迟 -33%，但 shift 错位可能损害质量
+   - 单独 Φ：质量 +OOD，但无延迟改善
+   - 联合 PLT + Φ：延迟 -33% + 质量稳定
+3. **对项目其他研究的暗示**：
+   - Hippo 胼胝体契约的"对齐"也是跨模块分布失配（属于"跨模块"维度）
+   - Thumos 的"agent 内化"也是某种"内部对齐"（外部 → 内部）
+   - 四种对齐（DiscoLoop / PLT / 跨模块 / 跨组件）可统一在一个"f_θ 消费分布失配"框架下
+
+#### 1.5.6 决策原则
+
+| 端侧约束 + 质量要求 | 推荐方案 |
+|-------------------|---------|
+| K=2 端侧预算充足 | ❌ 不引入任何 PLT/Φ（保持串行 H/L）|
+| K=4 端侧预算紧张 | ✅ 仅 L-PLT（节省 33% 延迟，不引入 Φ）|
+| K=4 + OOD 性能要求高 | ✅ L-PLT + Φ 方式 A（联合优化）|
+| K=6-8 端侧仍超预算 | ✅ L-PLT + Φ；若仍超 → §2.6 Loop B fallback |
+| K>8 | ❌ 不再叠加 PLT 变体；用 §2.6 StreamingLLM |
+
+详见 [logos/k-strategy.md §2.2.7](../logos/k-strategy.md) 完整设计与 [logos/64m-validation-plan.md §4.6.9](../logos/64m-validation-plan.md) 联合实验设计。
 
 ---
 
@@ -404,6 +525,6 @@
 
 ---
 
-**最后更新**：2026-07-31（v1.1：§7 完整更新 Loop B 调研完成度 7/7 + 应用整合 4 项 + 待办 3 项）
+**最后更新**：2026-07-31（v1.2：§1.5 新增 DiscoLoop × PLT 对齐统一视角 + §7 完整更新 Loop B 调研完成度 7/7 + 应用整合 4 项 + 待办 3 项）
 **作者**：来自 DiscoLoop 调研 + 用户概念澄清工作流
 **关键澄清**：用户理解的"一个 decode 输出 = 一个循环"在循环 Transformer 中是错误的；正确是 K 次循环迭代。详见 §0.3
