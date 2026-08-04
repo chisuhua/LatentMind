@@ -14,7 +14,7 @@
 |------|------|
 | [whitepaper.md](./whitepaper.md) | SADKO 架构设计与演进白皮书：异构双脑 + 扩散桥梁，从 64M 到 70B |
 | [multimodal-native.md](./multimodal-native.md) | SADKO 多模态原生设计：2026-07-29 增补，右脑与流形数学同构 |
-| [open-issues.md](./open-issues.md) | 文档体系审查：5 项技术冲突 + 多项数值/表述问题 |
+| [open-issues.md](./open-issues.md) | 文档体系审查：5 项技术冲突 + 多项数值/表述问题（含 B-09 Compressive 1D Conv 备选）|
 
 ### 1.2 64M 工程落地
 
@@ -45,6 +45,9 @@
 
 - **与 Logos 主线**：双轨分工（Logos = 推理 + 决策；SADKO = 感知 + 记忆 + 知识 + 多模态）
 - **与 Hippo 独立研究线**：[`../hippo/`](../hippo/) 是 SADKO 右脑关键技术的独立延伸（自 2026-07-30 起），不复用本目录的 64M 验证计划
+- **与 Thumos 独立研究线**：[`../thumos/`](../thumos/) 的赫尔墨斯契约管"模型 ↔ 外部 agent"信息流，与 SADKO 胼胝体契约（模型 ↔ 模型）互补
+- **与 Logos FSQ 消费**：SADKO FSQ 配置（[8,8,4]）受 [codebook-config-sop.md](../logos/codebook-config-sop.md) 约束；Logos 消费 Hippo FSQ 见 [fsq-consumption-design.md](../logos/fsq-consumption-design.md)
+- **外部研究参考**：[discoloop.md](../../references/discoloop.md)（§1.5 哲学同源声明）、[compressive-transformers.md](../../references/compressive-transformers.md)（B-09 1D Conv 备选）
 
 ---
 
