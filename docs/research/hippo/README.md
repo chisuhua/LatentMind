@@ -3,6 +3,7 @@
 > **定位**：LatentMind 项目第三研究线，专门研究 SADKO 右脑（Hippo）的关键技术——记忆内容 / KG 压缩生长 / FM 检索提取，独立于 SADKO 64M 验证计划推进，后期通过"胼胝体接口契约"接回 SADKO 主干。
 > **状态**：🆕 2026-07-30 启动
 > **上游 spec**：[docs/superpowers/specs/2026-07-30-hippo-research-line-design.md](../../superpowers/specs/2026-07-30-hippo-research-line-design.md)
+> **外部参考**：[Memorizing Transformers](../../references/memorizing-transformers.md) + [Compressive Transformers](../../references/compressive-transformers.md) + [StreamingLLM](../../references/streaming-llm.md) + [InfLLM](../../references/inf-llm.md)（Loop B 流派，详见 [../research/loop-memory-survey.md §2.2](../research/loop-memory-survey.md)）
 
 ---
 
@@ -12,6 +13,7 @@
 - **解耦维度**：验证路径独立——不复用 SADKO 64M Phase 0-8 流水线，三个子方向各自定义最小验证实验
 - **合并路径**：通过本文档 §2 "胼胝体接口契约"接回 SADKO 主干
 - **不复用**：不参考 SADKO 64M 验证计划 / Phase 0-8 流水线的时间表（自定节奏）
+- **Loop B 同源**：Hippo 的"独立记忆模块 + 检索 API"设计与 Loop B 流派的"外部 memory + 检索/压缩"流派同源——但 Hippo 走"端到端可微 + FSQ 离散化"路线（vs Loop B 的训练无关 / kNN 路径）
 
 ---
 
@@ -76,6 +78,37 @@
 | §2.3 推理时 Zero-Overhead | INV-2（码字映射冻结）| ✅ 一致（推理时不重新计算码本）|
 | §2.1 FSQ 几何锚点 | I2 Codebook Protocol | ✅ 一致（FSQ 是码字协议的实现）|
 | §7 "右脑 = 海马体" 隐喻 | I3 Retrieval API 语义 | ✅ 一致（海马体 = 检索 + 巩固）|
+
+### 2.6 与 Loop B 记忆系统的对照（2026-07-31 新增）
+
+> Hippo 与 Loop B 流派的"记忆 + 检索"系统同源，但路径不同。下表对比本项目 Hippo 与 4 个 Loop B 代表架构的差异：
+
+| 维度 | Hippo（本项目）| Memorizing Transformers | Compressive Transformers | StreamingLLM | InfLLM |
+|------|--------------|--------------------------|----------------------------|---------------|--------|
+| **存储形式** | FSQ 256 离散码本 | (K, V) 对直接存储 | 压缩后的连续向量 | 4 sink + 滑动 N tokens | 块级 (K, V) |
+| **压缩** | ✅ Flow Matching | ❌ 无 | ✅ 1D Conv（c=3-4）| ❌ 无（仅滑动）| ❌ 无（仅分块）|
+| **检索方式** | Top-K 码字 + Router | kNN（per-head）| dense attention over both | dense attention over window | top-k block attention |
+| **训练开销** | 高（端到端可微）| 中（kNN 不可微）| 中（含辅助损失）| **0（训练无关）** | **0（训练无关）** |
+| **端侧友好** | ⚠️ FM 计算重 | ❌ kNN 检索重 | ✅ 简单 | ✅✅ 极轻 | ⚠️ CPU/GPU 协同 |
+| **信息密度** | ✅✅ 高（256 锚点）| ✅ 全保留 | ⚠️ 有损压缩 | ⚠️ 仅最新 | ✅ 块级完整 |
+| **远距离召回** | ✅✅ | ✅✅ | ✅ | ❌ evicted 不可恢复 | ✅ |
+| **架构归属** | Loop B（独立模块）| Loop B（外部 memory）| Loop B（双缓冲）| Loop B（滑动 + anchor）| Loop B（块级检索）|
+
+**Hippo 的差异化定位**：
+- **端到端可微**：vs Memorizing/StreamingLLM/InfLLM 的训练无关路径——Hippo 可与 SADKO 联合优化
+- **离散锚点 (FSQ)**：vs Compressive 的连续压缩——更强结构化、更易检索
+- **海马体隐喻**：与 SADKO 双脑架构的语义统一
+
+**借鉴要点**（详见各论文 §6 与本项目对照表）：
+- ✅ **Memorizing 的 per-head gate g** → 可借鉴到 Nano-WM Gate 与 FSQ 通道 gate
+- ✅ **Compressive 的 1D Conv 压缩** → 可作为 Hippo FM 压缩的**轻量级备选**
+- ✅ **StreamingLLM 的 attention sink** → 可作为 Logos 端侧 KV 管理的极简 fallback
+- ✅ **InfLLM 的 block-level 检索** → 可作为 Hippo 64M 阶段 FSQ 利用率不足时的备选
+
+**不借鉴要点**：
+- ❌ **kNN 检索**：端侧不可行，且与 FSQ 离散检索不兼容
+- ❌ **训练无关**：放弃 Hippo 的核心优势（端到端可微）
+- ❌ **纯滑动窗口**：丢失远距离实体召回能力
 
 ---
 
